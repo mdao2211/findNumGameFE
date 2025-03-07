@@ -99,6 +99,7 @@ const AppRoutes: React.FC = () => {
     </Routes>
   );
 };
+//Test
 
 // Component trang Join: người chơi nhập tên và sau đó chọn phòng
 interface JoinPageProps {
