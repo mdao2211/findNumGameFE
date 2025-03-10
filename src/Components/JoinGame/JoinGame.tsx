@@ -1,3 +1,4 @@
+// src/Components/JoinGame/JoinGame.tsx
 import React, { useState } from "react";
 
 interface JoinGameProps {
@@ -28,7 +29,8 @@ const JoinGame: React.FC<JoinGameProps> = ({ onJoin }) => {
         />
         <button
           onClick={handleJoin}
-          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
+          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+        >
           Join Game
         </button>
       </div>

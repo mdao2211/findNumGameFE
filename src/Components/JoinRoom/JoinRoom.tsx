@@ -1,9 +1,11 @@
 // src/Components/JoinRoom/JoinRoom.tsx
 import React, { useEffect, useState } from "react";
 import { socket } from "../../services/socket";
+import CreateRoomForm from "../CreateRoomForm/CreateRoomForm";
+import { Player } from "../../types/game";
 
 interface JoinRoomProps {
-  playerName: string;
+  player: Player;
   onJoin: (roomId: string) => void;
 }
 
@@ -13,10 +15,10 @@ interface Room {
   playersCount: number;
 }
 
-const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, onJoin }) => {
+const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [showCreateRoomForm, setShowCreateRoomForm] = useState(false);
 
-  // Lấy danh sách phòng từ API khi component mount
   useEffect(() => {
     const fetchRooms = async () => {
       try {
@@ -30,11 +32,9 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, onJoin }) => {
         console.error("Error fetching rooms: ", error);
       }
     };
-
     fetchRooms();
   }, []);
 
-  // Lắng nghe các sự kiện socket khi phòng được tạo hoặc tham gia thành công
   useEffect(() => {
     const roomCreatedHandler = (room: Room) => {
       onJoin(room.id);
@@ -53,22 +53,56 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, onJoin }) => {
     };
   }, [onJoin]);
 
-  const handleCreateRoom = () => {
-    if (playerName.trim() === "") {
+  const handleShowCreateRoomForm = () => {
+    if (!player || !player.name || player.name.trim() === "") {
       alert("Vui lòng nhập tên của bạn");
       return;
     }
-    // Gửi yêu cầu tạo phòng cho server qua socket
-    socket.emit("createRoom", { playerName });
+    setShowCreateRoomForm(true);
+  };
+
+  const handleCreateRoom = async (roomName: string) => {
+    try {
+      const response = await fetch("http://localhost:5001/room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: roomName }),
+      });
+      if (!response.ok) {
+        throw new Error("Error creating room");
+      }
+      const room: Room = await response.json();
+      // Sử dụng room.id từ kết quả trả về để join vào phòng mới tạo
+      socket.emit("joinRoom", { roomId: room.id, playerId: player.id });
+      onJoin(room.id);
+      setShowCreateRoomForm(false);
+    } catch (error) {
+      console.error("Error creating room: ", error);
+    }
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    try {
+      const response = await fetch(`http://localhost:5001/room/${roomId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) {
+        throw new Error("Error delete room");
+      }
+      setRooms((prevRooms) => prevRooms.filter((room) => room.id !== roomId));
+    } catch (error) {
+      console.error("Error delete room: ", error);
+    }
   };
 
   const handleJoinRoom = (roomId: string) => {
-    if (playerName.trim() === "") {
+    if (player.name.trim() === "") {
       alert("Vui lòng nhập tên của bạn");
       return;
     }
-    // Gửi yêu cầu tham gia phòng cho server qua socket
-    socket.emit("joinRoom", { roomId, playerName });
+    socket.emit("joinRoom", { roomId, playerId: player.id });
+    onJoin(roomId);
   };
 
   return (
@@ -76,39 +110,56 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ playerName, onJoin }) => {
       <h1 className="text-3xl font-bold text-center mb-6">
         Tham gia phòng chơi
       </h1>
-      <div className="mb-4">
-        <button
-          onClick={handleCreateRoom}
-          className="w-full px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
-          Tạo phòng mới
-        </button>
-      </div>
-      <div>
-        <h2 className="text-xl font-semibold mb-2">Phòng đang có</h2>
-        {rooms.length === 0 ? (
-          <p>Không có phòng nào. Hãy tạo phòng mới!</p>
-        ) : (
-          <ul>
-            {rooms.map((room) => (
-              <li
-                key={room.id}
-                className="flex justify-between items-center p-2 border rounded mb-2">
-                <div>
-                  <span className="font-bold">{room.name}</span>
-                  <span className="ml-2 text-sm text-gray-600">
-                    ({room.playersCount} người)
-                  </span>
-                </div>
-                <button
-                  onClick={() => handleJoinRoom(room.id)}
-                  className="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                  Tham gia
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {showCreateRoomForm ? (
+        <CreateRoomForm onCreateRoom={handleCreateRoom} />
+      ) : (
+        <>
+          <div className="mb-4">
+            <button
+              onClick={handleShowCreateRoomForm}
+              className="w-full px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+            >
+              Tạo phòng mới
+            </button>
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold mb-2">Phòng đang có</h2>
+            {rooms.length === 0 ? (
+              <p>Không có phòng nào. Hãy tạo phòng mới!</p>
+            ) : (
+              <ul>
+                {rooms.map((room) => (
+                  <li
+                    key={room.id}
+                    className="flex justify-between items-center p-2 border rounded mb-2"
+                  >
+                    <div>
+                      <span className="font-bold">{room.name}</span>
+                      <span className="ml-2 text-sm text-gray-600">
+                        ({room.playersCount} người)
+                      </span>
+                    </div>
+                    <div className="button-list justify-evenly">
+                      <button
+                        onClick={() => handleJoinRoom(room.id)}
+                        className="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                      >
+                        Tham gia
+                      </button>
+                      <button
+                        onClick={() => handleDeleteRoom(room.id)}
+                        className="px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

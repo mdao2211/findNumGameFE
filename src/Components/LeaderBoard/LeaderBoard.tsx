@@ -8,7 +8,6 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ players }) => {
-  // Sắp xếp theo điểm giảm dần
   const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
 
   return (
