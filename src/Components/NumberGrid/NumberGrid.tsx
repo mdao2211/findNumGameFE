@@ -2,8 +2,12 @@ import { useState, useEffect } from "react";
 import { FiRefreshCcw } from "react-icons/fi";
 import { BiTimer } from "react-icons/bi";
 
-const NumberGrid = () => {
-  // Xác định rõ kiểu cho state
+interface NumberGridProps {
+  isHost: boolean;
+  onStartGame?: () => void;
+}
+
+const NumberGrid: React.FC<NumberGridProps> = ({ isHost, onStartGame }) => {
   const [numbers, setNumbers] = useState<number[]>([]);
   const [targetNumber, setTargetNumber] = useState<number | null>(null);
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -29,10 +33,12 @@ const NumberGrid = () => {
     setGameStarted(true);
     setTimer(0);
     setGameCompleted(false);
+    if (onStartGame) {
+      onStartGame();
+    }
   };
 
   useEffect(() => {
-    // Định nghĩa biến interval với kiểu number (ID của timer)
     let interval: number | null = null;
     if (gameStarted && !gameCompleted) {
       interval = window.setInterval(() => {
@@ -75,12 +81,19 @@ const NumberGrid = () => {
           <h1 className="text-3xl font-bold text-gray-800">
             Number Finding Game
           </h1>
-          <button
-            onClick={startGame}
-            className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-            <FiRefreshCcw className="w-5 h-5" />
-            {gameStarted ? "Restart" : "Start Game"}
-          </button>
+          {isHost ? (
+            <button
+              onClick={startGame}
+              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <FiRefreshCcw className="w-5 h-5" />
+              {gameStarted ? "Restart" : "Start Game"}
+            </button>
+          ) : (
+            <div className="text-blue-600 font-semibold">
+              Waiting for host to start game
+            </div>
+          )}
         </div>
 
         {gameStarted && (
@@ -129,7 +142,8 @@ const NumberGrid = () => {
                     ? "bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-800"
                     : "bg-gray-100 cursor-not-allowed text-gray-400"
                 }
-              `}>
+              `}
+            >
               {number}
             </button>
           ))}

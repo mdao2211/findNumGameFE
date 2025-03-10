@@ -83,7 +83,7 @@ const GamePage: React.FC<GamePageProps> = ({
         isHost={currentPlayer?.isHost ?? false}
         onLeaveRoom={handleLeaveRoom}
       />
-      <NumberGrid />
+      <NumberGrid isHost={currentPlayer?.isHost ?? false}/>
       <WinnerNotification winner={winner} />
     </div>
   );
