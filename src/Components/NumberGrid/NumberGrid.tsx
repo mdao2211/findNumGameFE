@@ -1,13 +1,17 @@
+// src/Components/NumberGrid/NumberGrid.tsx
 import { useState, useEffect } from "react";
 import { FiRefreshCcw } from "react-icons/fi";
 import { BiTimer } from "react-icons/bi";
+import { socket } from "../../services/socket";
 
 interface NumberGridProps {
   isHost: boolean;
   onStartGame?: () => void;
+  roomId: string; // truyền roomId nếu cần
+  playerId: string; // truyền playerId để gửi event cập nhật điểm
 }
 
-const NumberGrid: React.FC<NumberGridProps> = ({ isHost, onStartGame }) => {
+const NumberGrid: React.FC<NumberGridProps> = ({ isHost, onStartGame, roomId, playerId }) => {
   const [numbers, setNumbers] = useState<number[]>([]);
   const [targetNumber, setTargetNumber] = useState<number | null>(null);
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -54,17 +58,19 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, onStartGame }) => {
 
   const handleNumberClick = (number: number) => {
     if (!gameStarted || gameCompleted) return;
-
     if (number === targetNumber) {
-      setScore((prev) => prev + 1);
+      // Tăng điểm cục bộ
+      setScore((prev) => prev + 10);
       setSelectedNumbers((prev) => [...prev, number]);
-      if (score + 1 >= 10) {
+      // Gửi event cập nhật điểm lên backend (ví dụ: thêm 10 điểm)
+      socket.emit("player:correctGuess", { roomId, playerId, points: 10 });
+      if (score + 10 >= 100) { // ví dụ: khi điểm đạt 100, game kết thúc
         setGameCompleted(true);
       } else {
         setTargetNumber(Math.floor(Math.random() * 100) + 1);
       }
     } else {
-      setScore((prev) => Math.max(0, prev - 1));
+      setScore((prev) => Math.max(0, prev - 5));
     }
   };
 
@@ -81,7 +87,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, onStartGame }) => {
           <h1 className="text-3xl font-bold text-gray-800">
             Number Finding Game
           </h1>
-          {isHost ? (
+          {/* {isHost ? ( */}
             <button
               onClick={startGame}
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -89,11 +95,11 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, onStartGame }) => {
               <FiRefreshCcw className="w-5 h-5" />
               {gameStarted ? "Restart" : "Start Game"}
             </button>
-          ) : (
+          {/* ) : (
             <div className="text-blue-600 font-semibold">
               Waiting for host to start game
             </div>
-          )}
+          )} */}
         </div>
 
         {gameStarted && (

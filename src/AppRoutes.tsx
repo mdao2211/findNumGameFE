@@ -1,5 +1,4 @@
-// src/AppRoutes.tsx
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Routes, Route } from "react-router-dom";
 import { socket } from "./services/socket";
 import { useGameStore } from "./store/gameStore";
@@ -26,6 +25,12 @@ const AppRoutes: React.FC = () => {
   // State lưu room hiện tại và thông tin người chơi hiện tại
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
+  const currentPlayerRef = useRef<Player | null>(currentPlayer);
+  
+  // Cập nhật ref mỗi khi currentPlayer thay đổi
+  useEffect(() => {
+    currentPlayerRef.current = currentPlayer;
+  }, [currentPlayer]);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -33,12 +38,18 @@ const AppRoutes: React.FC = () => {
     });
 
     socket.on("room:playerJoined", (joinedPlayer: Player) => {
-      // Nếu người join trùng với currentPlayer, cập nhật thuộc tính isHost
-      if (currentPlayer && joinedPlayer.id === currentPlayer.id) {
-        setCurrentPlayer({ ...currentPlayer, isHost: joinedPlayer.isHost });
-      }
+      console.log("room:playerJoined", joinedPlayer);
+      setCurrentPlayer((prev) => {
+        // Nếu chưa có currentPlayer, hoặc nếu event có cùng id và isHost true, cập nhật.
+        if (!prev || (joinedPlayer.id === prev.id)) {
+          return joinedPlayer;
+        }
+        return prev;
+      });
       addPlayer(joinedPlayer);
     });
+
+    
 
     socket.on("player:leave", (playerId: string) => {
       removePlayer(playerId);
@@ -48,12 +59,9 @@ const AppRoutes: React.FC = () => {
       setCurrentNumber(number);
     });
 
-    socket.on(
-      "game:updateScore",
-      ({ playerId, score }: { playerId: string; score: number }) => {
-        updatePlayerScore(playerId, score);
-      }
-    );
+    socket.on("game:updateScore", ({ playerId, score }: { playerId: string; score: number }) => {
+      updatePlayerScore(playerId, score);
+    });
 
     socket.on("game:end", (winner: Player) => {
       endGame(winner);
@@ -81,7 +89,6 @@ const AppRoutes: React.FC = () => {
     endGame,
     setTimeRemaining,
     fetchLeaderboard,
-    currentPlayer,
   ]);
 
   return (

@@ -3,9 +3,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GameRoom from "../GameRoom/GameRoom";
 import NumberGrid from "../NumberGrid/NumberGrid";
-import WinnerNotification from "../WinnerNotification/WinnerNotification";
 import { Player } from "../../types/game";
 import { socket } from "../../services/socket";
+import RoomLeaderboard from "../RoomLeaderboard/RoomLeaderboard";
 
 interface RoomDetails {
   id: string;
@@ -28,7 +28,6 @@ const GamePage: React.FC<GamePageProps> = ({
   players,
   timeRemaining,
   isGameStarted,
-  winner,
   currentRoomId,
   currentPlayer,
 }) => {
@@ -56,16 +55,6 @@ const GamePage: React.FC<GamePageProps> = ({
     fetchRoomDetails();
   }, [currentRoomId]);
 
-  const handleStartGame = () => {
-    if (!currentRoomId) return;
-    socket.emit("game:start", { roomId: currentRoomId });
-  };
-
-  const handleGuess = (guess: number) => {
-    if (!currentRoomId) return;
-    socket.emit("player:guess", { roomId: currentRoomId, guess });
-  };
-
   const handleLeaveRoom = () => {
     if (!currentRoomId || !currentPlayer) return;
     socket.emit("leaveRoom", { roomId: currentRoomId, playerId: currentPlayer.id });
@@ -73,19 +62,31 @@ const GamePage: React.FC<GamePageProps> = ({
   };
 
   return (
-    <div className="space-y-6">
-      <GameRoom
-        onStartGame={handleStartGame}
-        onGuess={handleGuess}
-        timeRemaining={timeRemaining}
-        playersCount={roomDetails ? roomDetails.playersCount : players.length}
-        isGameStarted={isGameStarted}
-        isHost={currentPlayer?.isHost ?? false}
-        onLeaveRoom={handleLeaveRoom}
-      />
-      <NumberGrid isHost={currentPlayer?.isHost ?? false}/>
-      <WinnerNotification winner={winner} />
+    <div className="flex flex-col max-w-2xs lg:flex-row items-start justify-center gap-8 p-6 lg:p-12 min-h-screen bg-gray-100">
+  {/* Game Room and Number Grid */}
+  <div className="space-y-6 w-full bg-white p-6 rounded-2xl shadow-lg">
+    <GameRoom
+      timeRemaining={timeRemaining}
+      playersCount={roomDetails ? roomDetails.playersCount : players.length}
+      isGameStarted={isGameStarted}
+      isHost={currentPlayer?.isHost ?? false}
+      onLeaveRoom={handleLeaveRoom}
+    />
+    <NumberGrid 
+      isHost={currentPlayer?.isHost ?? false} 
+      roomId={currentRoomId!} 
+      playerId={currentPlayer!.id} 
+    />
+  </div>
+
+  {/* Leaderboard Section */}
+  <div className="w-full lg:w-1/3">
+    <div className="bg-white p-6 rounded-2xl shadow-lg">
+      <RoomLeaderboard roomId={currentRoomId!} />
     </div>
+  </div>
+</div>
+
   );
 };
 

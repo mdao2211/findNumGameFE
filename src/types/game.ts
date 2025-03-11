@@ -1,9 +1,9 @@
 export interface Player {
   id: string;
   name: string;
-  score: number;
-  isReady: boolean;
-  isHost: boolean;
+  score?: number;
+  isReady?: boolean;
+  isHost?: boolean;
 }
 
 export interface GameState {

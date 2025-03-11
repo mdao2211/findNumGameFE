@@ -8,7 +8,7 @@ interface LeaderboardProps {
 }
 
 const Leaderboard: React.FC<LeaderboardProps> = ({ players }) => {
-  const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+  const sortedPlayers = [...players].sort((a, b) => (b.score || 0) - (a.score || 0));
 
   return (
     <div className="bg-white rounded-lg p-6 shadow-xl">
