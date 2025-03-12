@@ -39,7 +39,7 @@ const GamePage: React.FC<GamePageProps> = ({
     if (!currentRoomId) return;
     const fetchRoomDetails = async () => {
       try {
-        const response = await fetch("http://localhost:5001/room");
+        const response = await fetch("http://localhost:8080/room");
         if (!response.ok) {
           throw new Error("Error fetching room details");
         }

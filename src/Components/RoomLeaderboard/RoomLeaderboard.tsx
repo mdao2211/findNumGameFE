@@ -18,7 +18,7 @@ const RoomLeaderboard: React.FC<RoomLeaderboardProps> = ({ roomId }) => {
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:5001/room/${roomId}/leaderboard`
+        `http://localhost:8080/room/${roomId}/leaderboard`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard");

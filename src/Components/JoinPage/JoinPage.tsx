@@ -24,7 +24,7 @@ const JoinPage: React.FC<JoinPageProps> = ({
 
   const handleNameSubmit = async (name: string) => {
     try {
-      const response = await fetch("http://localhost:5001/player", {
+      const response = await fetch("http://localhost:8080/player", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),

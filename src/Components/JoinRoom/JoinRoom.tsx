@@ -22,7 +22,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await fetch("http://localhost:5001/room");
+        const response = await fetch("http://localhost:8080/room");
         if (!response.ok) {
           throw new Error("Error fetching rooms");
         }
@@ -63,7 +63,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
 
   const handleCreateRoom = async (roomName: string) => {
     try {
-      const response = await fetch("http://localhost:5001/room", {
+      const response = await fetch("http://localhost:8080/room", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: roomName }),
@@ -83,7 +83,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
 
   const handleDeleteRoom = async (roomId: string) => {
     try {
-      const response = await fetch(`http://localhost:5001/room/${roomId}`, {
+      const response = await fetch(`http://localhost:8080/room/${roomId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
