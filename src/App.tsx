@@ -2,13 +2,16 @@
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
+import { ToastContainer } from 'react-toastify';
+import "react-toastify/dist/ReactToastify.css";
 
 const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gradient-to-br from-blue-500 to-purple-600 p-8">
+      <div className="min-h-screen bg-[url(/src/img/find_num.avif)] bg-no-repeat bg-cover p-8">
         <div className="max-w-4xl mx-auto">
           <AppRoutes />
+          <ToastContainer position="top-center" autoClose={3000} />
         </div>
       </div>
     </BrowserRouter>

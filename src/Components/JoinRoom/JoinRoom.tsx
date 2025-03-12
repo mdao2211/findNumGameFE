@@ -111,7 +111,17 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
         Tham gia phòng chơi
       </h1>
       {showCreateRoomForm ? (
-        <CreateRoomForm onCreateRoom={handleCreateRoom} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="relative bg-white rounded-3xl p-8 shadow-2xl w-full max-w-md">
+            <button
+              onClick={() => setShowCreateRoomForm(false)}
+              className="absolute top-2 right-2 text-2xl font-bold text-gray-600 hover:text-gray-800"
+            >
+              &times;
+            </button>
+            <CreateRoomForm onCreateRoom={handleCreateRoom} />
+          </div>
+        </div>
       ) : (
         <>
           <div className="mb-4">
@@ -139,7 +149,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
                         ({room.playersCount} người)
                       </span>
                     </div>
-                    <div className="button-list justify-evenly">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => handleJoinRoom(room.id)}
                         className="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"

@@ -25,7 +25,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   const [timer, setTimer] = useState<number>(0);
   const [gameCompleted, setGameCompleted] = useState<boolean>(false);
 
-  const MAX_TIME = 60;
+  const MAX_TIME = 180;
 
   const shuffleNumbers = (): number[] => {
     const nums = Array.from({ length: 100 }, (_, i) => i + 1);
@@ -126,6 +126,9 @@ const NumberGrid: React.FC<NumberGridProps> = ({
           <h1 className="text-3xl font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Number Finding Game
           </h1>
+          <h3 className=" font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            You have 3 minutes to get the highest score by finding correct numbers.
+          </h3>
           <button
             onClick={startGame}
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">

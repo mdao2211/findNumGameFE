@@ -74,7 +74,7 @@ const GamePage: React.FC<GamePageProps> = ({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row items-start justify-center gap-8 p-4 lg:p-8 min-h-screen bg-gray-100">
+    <div className="w-full flex flex-col lg:flex-row items-start justify-center gap-8 p-4 lg:p-8 min-h-screen bg-gray-100">
       {/* Khối GameRoom và NumberGrid */}
       <div className="space-y-6 w-full lg:w-7/10 bg-white p-4 lg:p-8 rounded-3xl shadow-2xl">
         <GameRoom

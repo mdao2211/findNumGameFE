@@ -1,5 +1,6 @@
 // src/Components/JoinGame/JoinGame.tsx
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 
 interface JoinGameProps {
   onJoin: (name: string) => void;
@@ -11,6 +12,8 @@ const JoinGame: React.FC<JoinGameProps> = ({ onJoin }) => {
   const handleJoin = () => {
     if (playerName.trim()) {
       onJoin(playerName);
+    } else {
+      toast.error("Vui lòng nhập tên của bạn!");
     }
   };
 
