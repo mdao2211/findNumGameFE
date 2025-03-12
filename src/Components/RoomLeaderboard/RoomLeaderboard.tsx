@@ -57,28 +57,27 @@ const RoomLeaderboard: React.FC<RoomLeaderboardProps> = ({ roomId }) => {
       {error && <p className="text-red-600">Error: {error}</p>}
       {!loading && !error && (
         <div className="space-y-2">
-        {sortedPlayers.map((player, index) => {
-          let borderClass = "";
-          // Kiểm tra vị trí của người chơi và áp dụng khung với màu sắc tương ứng
-          if (index === 0) {
-            borderClass = "bg-yellow-500"; // Vàng
-          } else if (index === 1) {
-            borderClass = "bg-gray-400"; // Bạc (bạn có thể tùy chỉnh màu)
-          } else if (index === 2) {
-            borderClass = "bg-orange-500"; // Đồng (bạn có thể tùy chỉnh màu)
-          }
+          {sortedPlayers.map((player, index) => {
+            let borderClass = "";
+            // Kiểm tra vị trí của người chơi và áp dụng khung với màu sắc tương ứng
+            if (index === 0) {
+              borderClass = "bg-yellow-500"; // Vàng
+            } else if (index === 1) {
+              borderClass = "bg-gray-400"; // Bạc (bạn có thể tùy chỉnh màu)
+            } else if (index === 2) {
+              borderClass = "bg-orange-500"; // Đồng (bạn có thể tùy chỉnh màu)
+            }
 
-          return (
-            <div
-              key={player.id}
-              className={`flex justify-between items-center p-2 bg-gray-50 rounded ${borderClass}`}
-            >
-              <span>{player.name}</span>
-              <span className="font-semibold">{player.score || 0}</span>
-            </div>
-          );
-        })}
-      </div>
+            return (
+              <div
+                key={player.id}
+                className={`flex justify-between items-center p-2 bg-gray-50 rounded ${borderClass}`}>
+                <span>{player.name}</span>
+                <span className="font-semibold">{player.score || 0}</span>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

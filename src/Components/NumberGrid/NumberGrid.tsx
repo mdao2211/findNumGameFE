@@ -3,7 +3,7 @@ import { FiRefreshCcw } from "react-icons/fi";
 import { BiTimer } from "react-icons/bi";
 import { socket } from "../../services/socket";
 import { Player } from "../../types/game";
-import Loader from '../Loader/Loader';
+import Loader from "../Loader/Loader";
 
 interface NumberGridProps {
   isHost: boolean;
@@ -11,7 +11,11 @@ interface NumberGridProps {
   playerId: string;
 }
 
-const NumberGrid: React.FC<NumberGridProps> = ({ isHost, roomId, playerId }) => {
+const NumberGrid: React.FC<NumberGridProps> = ({
+  isHost,
+  roomId,
+  playerId,
+}) => {
   const [numbers, setNumbers] = useState<number[]>([]);
   const [targetNumber, setTargetNumber] = useState<number | null>(null);
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
@@ -93,9 +97,8 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, roomId, playerId }) => 
       }
     });
 
-    socket.on("game:end", (winner: Player) => {
+    socket.on("game:end", () => {
       setGameCompleted(true);
-      // Bạn có thể thông báo thêm thông tin về người chiến thắng nếu cần
     });
 
     socket.on("score:updated", (updatedPlayer: Player) => {
@@ -120,14 +123,14 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, roomId, playerId }) => 
             Number Finding Game
           </h1>
           <h3 className="font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            You have 3 minutes to get the highest score by finding correct numbers.
+            You have 3 minutes to get the highest score by finding correct
+            numbers.
           </h3>
           {isHost ? (
             <button
               onClick={handleStartGame}
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
-              disabled={gameStarted && !gameCompleted}
-            >
+              disabled={gameStarted && !gameCompleted}>
               <FiRefreshCcw className="w-5 h-5" />
               {gameStarted ? "Restart Game" : "Start Game"}
             </button>
@@ -198,8 +201,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, roomId, playerId }) => 
                     ? "bg-red-500/10 text-red-600 ring-2 ring-red-500 cursor-not-allowed"
                     : "bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md text-gray-800 hover:scale-[1.03]"
                 }
-              `}
-            >
+              `}>
               {number}
             </button>
           ))}
