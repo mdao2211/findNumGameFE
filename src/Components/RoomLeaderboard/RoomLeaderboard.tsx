@@ -7,6 +7,7 @@ import { Player } from "../../types/game";
 interface RoomLeaderboardProps {
   roomId: string;
 }
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const RoomLeaderboard: React.FC<RoomLeaderboardProps> = ({ roomId }) => {
   const [players, setPlayers] = useState<Player[]>([]);
@@ -18,7 +19,7 @@ const RoomLeaderboard: React.FC<RoomLeaderboardProps> = ({ roomId }) => {
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:8080/room/${roomId}/leaderboard`
+        `${API_BASE_URL}/room/${roomId}/leaderboard`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard");

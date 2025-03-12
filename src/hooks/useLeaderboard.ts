@@ -1,6 +1,7 @@
 // src/hooks/useLeaderboard.ts
 import { useState, useEffect } from "react";
 import { Player } from "../types/game";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const useLeaderboard = () => {
   const [leaderboard, setLeaderboard] = useState<Player[]>([]);
@@ -8,7 +9,7 @@ const useLeaderboard = () => {
   const fetchLeaderboard = async () => {
     try {
       const response = await fetch(
-        "http://localhost:8080/player/top-5-players"
+        `${API_BASE_URL}/player/top-5-players`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch leaderboard");

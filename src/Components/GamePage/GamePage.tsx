@@ -6,6 +6,7 @@ import NumberGrid from "../NumberGrid/NumberGrid";
 import RoomLeaderboard from "../RoomLeaderboard/RoomLeaderboard";
 import { Player } from "../../types/game";
 import { socket } from "../../services/socket";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface RoomDetails {
   id: string;
@@ -39,7 +40,7 @@ const GamePage: React.FC<GamePageProps> = ({
     if (!currentRoomId) return;
     const fetchRoomDetails = async () => {
       try {
-        const response = await fetch("http://localhost:8080/room");
+        const response = await fetch(`${API_BASE_URL}/room`);
         if (!response.ok) {
           throw new Error("Error fetching room details");
         }

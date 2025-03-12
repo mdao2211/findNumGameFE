@@ -15,6 +15,8 @@ interface Room {
   playersCount: number;
 }
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [showCreateRoomForm, setShowCreateRoomForm] = useState(false);
@@ -22,7 +24,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        const response = await fetch("http://localhost:8080/room");
+        const response = await fetch(`${API_BASE_URL}/room`);
         if (!response.ok) {
           throw new Error("Error fetching rooms");
         }
@@ -63,7 +65,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
 
   const handleCreateRoom = async (roomName: string) => {
     try {
-      const response = await fetch("http://localhost:8080/room", {
+      const response = await fetch(`${API_BASE_URL}/room`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: roomName }),
@@ -83,7 +85,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
 
   const handleDeleteRoom = async (roomId: string) => {
     try {
-      const response = await fetch(`http://localhost:8080/room/${roomId}`, {
+      const response = await fetch(`${API_BASE_URL}/room/${roomId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });

@@ -13,6 +13,7 @@ interface JoinPageProps {
   setCurrentRoomId: (roomId: string) => void;
   setCurrentPlayer: (player: Player) => void;
 }
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const JoinPage: React.FC<JoinPageProps> = ({
   leaderboard,
@@ -24,7 +25,7 @@ const JoinPage: React.FC<JoinPageProps> = ({
 
   const handleNameSubmit = async (name: string) => {
     try {
-      const response = await fetch("http://localhost:8080/player", {
+      const response = await fetch(`${API_BASE_URL}/player`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
