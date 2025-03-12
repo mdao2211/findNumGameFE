@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
-import { FiRefreshCcw } from "react-icons/fi";
-import { BiTimer } from "react-icons/bi";
+import { RefreshCcw } from "lucide-react";
+import { Player, GameState } from "../../types/game";
 import { socket } from "../../services/socket";
-import { Player } from "../../types/game";
-import Loader from "../Loader/Loader";
 
 interface NumberGridProps {
   isHost: boolean;
@@ -16,16 +14,17 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   roomId,
   playerId,
 }) => {
+  const [gameState, setGameState] = useState<GameState>({
+    targetNumber: null,
+    score: 0,
+    timer: 180,
+    isStarted: false,
+    isCompleted: false,
+  });
+
   const [numbers, setNumbers] = useState<number[]>([]);
-  const [targetNumber, setTargetNumber] = useState<number | null>(null);
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
   const [incorrectNumbers, setIncorrectNumbers] = useState<number[]>([]);
-  const [score, setScore] = useState<number>(0);
-  const [gameStarted, setGameStarted] = useState<boolean>(false);
-  const [timer, setTimer] = useState<number>(180);
-  const [gameCompleted, setGameCompleted] = useState<boolean>(false);
-
-  const MAX_TIME = 180;
 
   const shuffleNumbers = (): number[] => {
     const nums = Array.from({ length: 100 }, (_, i) => i + 1);
@@ -36,82 +35,113 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     return nums;
   };
 
-  // Nếu cần, hàm lấy số mục tiêu cục bộ từ danh sách (trường hợp chưa có sự đồng bộ từ server)
-  const getRandomTargetNumber = (): number | null => {
-    const availableNumbers = numbers.filter(
-      (num) => !selectedNumbers.includes(num) && !incorrectNumbers.includes(num)
-    );
-    if (availableNumbers.length === 0) return null;
-    return availableNumbers[
-      Math.floor(Math.random() * availableNumbers.length)
-    ];
-  };
-
   const handleStartGame = () => {
     if (!isHost) return;
-    // Host sẽ gửi event "game:start" lên server để khởi tạo game
+    // Gửi event bắt đầu game với roomId và playerId
     socket.emit("game:start", { roomId, playerId });
+
+    // Log để debug
+    console.log("Sending game:start event", { roomId, playerId, isHost });
   };
 
   const handleNumberClick = (number: number) => {
-    if (!gameStarted || gameCompleted) return;
+    if (
+      !gameState.isStarted ||
+      gameState.isCompleted ||
+      !gameState.targetNumber
+    )
+      return;
 
-    if (number === targetNumber) {
-      setScore((prev) => prev + 10);
+    if (number === gameState.targetNumber) {
+      setGameState((prev) => ({ ...prev, score: prev.score + 10 }));
       setSelectedNumbers((prev) => [...prev, number]);
-      socket.emit("player:correctGuess", { roomId, playerId, points: 10 });
-      // Cập nhật targetNumber cục bộ (nếu chưa có sự đồng bộ riêng cho lưới)
-      const newTarget = getRandomTargetNumber();
-      setTargetNumber(newTarget);
+      socket.emit("player:correctGuess", {
+        roomId,
+        playerId,
+        points: 10,
+        guessedNumber: number,
+        targetNumber: gameState.targetNumber,
+      });
     } else {
-      setScore((prev) => Math.max(0, prev - 5));
+      setGameState((prev) => ({ ...prev, score: Math.max(0, prev.score - 5) }));
       setIncorrectNumbers((prev) => [...prev, number]);
-      socket.emit("player:wrongGuess", { roomId, playerId, points: -5 });
+      socket.emit("player:wrongGuess", {
+        roomId,
+        playerId,
+        points: -5,
+        guessedNumber: number,
+        targetNumber: gameState.targetNumber,
+      });
     }
   };
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   useEffect(() => {
-    // Lắng nghe sự kiện game từ server
-    socket.on("game:number", (number: number) => {
-      // Khi nhận được số mục tiêu từ server, khởi tạo trạng thái game chung
-      setGameStarted(true);
-      setTargetNumber(number);
+    // Log khi component mount để debug
+    console.log("Component mounted with props:", { isHost, roomId, playerId });
+
+    // Lắng nghe sự kiện game bắt đầu từ server
+    socket.on("game:started", (data) => {
+      console.log("Received game:started event", data);
+      const { targetNumber } = data;
+
+      setGameState({
+        targetNumber,
+        score: 0,
+        timer: 180,
+        isStarted: true,
+        isCompleted: false,
+      });
       setNumbers(shuffleNumbers());
       setSelectedNumbers([]);
       setIncorrectNumbers([]);
-      setScore(0);
-      setGameCompleted(false);
-      setTimer(MAX_TIME);
     });
 
     socket.on("game:timeUpdate", (time: number) => {
-      setTimer(time);
-      if (time <= 0) {
-        setGameCompleted(true);
-      }
+      setGameState((prev) => ({
+        ...prev,
+        timer: time,
+        isCompleted: time <= 0,
+      }));
     });
 
     socket.on("game:end", () => {
-      setGameCompleted(true);
+      setGameState((prev) => ({ ...prev, isCompleted: true }));
     });
 
     socket.on("score:updated", (updatedPlayer: Player) => {
       if (updatedPlayer.id === playerId) {
-        setScore(updatedPlayer.score ?? 0);
+        setGameState((prev) => ({ ...prev, score: updatedPlayer.score ?? 0 }));
       }
     });
 
+    socket.on("game:targetUpdate", (newTarget: number) => {
+      console.log("Received new target number:", newTarget);
+      setGameState((prev) => ({ ...prev, targetNumber: newTarget }));
+    });
+
+    // Thêm error handler cho socket
+    socket.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+
+    socket.on("error", (error) => {
+      console.error("Socket error:", error);
+    });
+
     return () => {
-      socket.off("game:number");
+      socket.off("game:started");
       socket.off("game:timeUpdate");
       socket.off("game:end");
       socket.off("score:updated");
+      socket.off("game:targetUpdate");
+      socket.off("connect_error");
+      socket.off("error");
     };
   }, [playerId]);
 
@@ -130,52 +160,54 @@ const NumberGrid: React.FC<NumberGridProps> = ({
             <button
               onClick={handleStartGame}
               className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
-              disabled={gameStarted && !gameCompleted}>
-              <FiRefreshCcw className="w-5 h-5" />
-              {gameStarted ? "Restart Game" : "Start Game"}
+              disabled={gameState.isStarted && !gameState.isCompleted}>
+              <RefreshCcw className="w-5 h-5" />
+              {gameState.isStarted ? "Restart Game" : "Start Game"}
             </button>
           ) : (
-            <div className="text-gray-700 font-medium">
+            <div className="flex items-center gap-2 text-gray-700 font-medium">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
               Waiting for host to start the game...
-              <Loader />
             </div>
           )}
         </div>
 
-        {gameStarted && (
+        {gameState.isStarted && (
           <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-4 flex-wrap">
               <div className="flex items-center gap-2 bg-gray-100 px-4 py-3 rounded-xl">
-                <BiTimer className="w-6 h-6 text-blue-600" />
+                <span className="w-6 h-6 text-blue-600">⏱️</span>
                 <span className="font-medium text-gray-700 text-lg">
-                  {formatTime(timer)}
+                  {formatTime(gameState.timer)}
                 </span>
               </div>
               <div className="bg-gray-100 px-4 py-3 rounded-xl">
                 <span className="font-medium text-gray-700 text-lg">
-                  Score: <span className="text-blue-600">{score}</span>
+                  Score:{" "}
+                  <span className="text-blue-600">{gameState.score}</span>
                 </span>
               </div>
             </div>
-            {!gameCompleted && (
+            {!gameState.isCompleted && gameState.targetNumber && (
               <div className="text-lg font-semibold bg-blue-100 px-6 py-2 rounded-full text-blue-800 flex items-center gap-2">
                 <span className="text-xl">🔎</span>
                 Find number:
                 <span className="text-2xl ml-2 font-bold text-blue-600">
-                  {targetNumber}
+                  {gameState.targetNumber}
                 </span>
               </div>
             )}
           </div>
         )}
 
-        {gameCompleted && (
+        {gameState.isCompleted && (
           <div className="text-center mb-6 bg-red-100 p-6 rounded-xl border-2 border-red-200">
             <h2 className="text-3xl font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
               ⏳ Time's Up!
             </h2>
             <p className="text-red-700 text-lg">
-              Your final score: <span className="font-bold">{score}</span>
+              Your final score:{" "}
+              <span className="font-bold">{gameState.score}</span>
             </p>
           </div>
         )}
@@ -188,8 +220,8 @@ const NumberGrid: React.FC<NumberGridProps> = ({
               disabled={
                 selectedNumbers.includes(number) ||
                 incorrectNumbers.includes(number) ||
-                !gameStarted ||
-                gameCompleted
+                !gameState.isStarted ||
+                gameState.isCompleted
               }
               className={`
                 aspect-square flex items-center justify-center text-lg font-semibold rounded-xl

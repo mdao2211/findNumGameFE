@@ -7,11 +7,11 @@ export interface Player {
 }
 
 export interface GameState {
-  players: Player[];
-  currentNumber: number | null;
-  isGameStarted: boolean;
-  winner: Player | null;
-  timeRemaining: number;
+  targetNumber: number | null;
+  score: number;
+  timer: number;
+  isStarted: boolean;
+  isCompleted: boolean;
 }
 export interface JoinRoomResponse {
   success: boolean;
