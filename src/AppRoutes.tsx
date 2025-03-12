@@ -26,11 +26,23 @@ const AppRoutes: React.FC = () => {
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(null);
   const [currentPlayer, setCurrentPlayer] = useState<Player | null>(null);
   const currentPlayerRef = useRef<Player | null>(currentPlayer);
-  
+
   // Cập nhật ref mỗi khi currentPlayer thay đổi
   useEffect(() => {
     currentPlayerRef.current = currentPlayer;
   }, [currentPlayer]);
+
+  useEffect(() => {
+    const storedRoomId = localStorage.getItem("currentRoomId");
+    const storedPlayer = localStorage.getItem("currentPlayer");
+
+    if (storedRoomId) {
+      setCurrentRoomId(storedRoomId);
+    }
+    if (storedPlayer) {
+      setCurrentPlayer(JSON.parse(storedPlayer));
+    }
+  }, []);
 
   useEffect(() => {
     socket.on("connect", () => {
@@ -38,18 +50,16 @@ const AppRoutes: React.FC = () => {
     });
 
     socket.on("room:playerJoined", (joinedPlayer: Player) => {
-      console.log("room:playerJoined", joinedPlayer);
+      // console.log("room:playerJoined", joinedPlayer);
       setCurrentPlayer((prev) => {
         // Nếu chưa có currentPlayer, hoặc nếu event có cùng id và isHost true, cập nhật.
-        if (!prev || (joinedPlayer.id === prev.id)) {
+        if (!prev || joinedPlayer.id === prev.id) {
           return joinedPlayer;
         }
         return prev;
       });
       addPlayer(joinedPlayer);
     });
-
-    
 
     socket.on("player:leave", (playerId: string) => {
       removePlayer(playerId);
@@ -59,9 +69,12 @@ const AppRoutes: React.FC = () => {
       setCurrentNumber(number);
     });
 
-    socket.on("game:updateScore", ({ playerId, score }: { playerId: string; score: number }) => {
-      updatePlayerScore(playerId, score);
-    });
+    socket.on(
+      "game:updateScore",
+      ({ playerId, score }: { playerId: string; score: number }) => {
+        updatePlayerScore(playerId, score);
+      }
+    );
 
     socket.on("game:end", (winner: Player) => {
       endGame(winner);

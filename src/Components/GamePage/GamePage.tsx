@@ -3,9 +3,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GameRoom from "../GameRoom/GameRoom";
 import NumberGrid from "../NumberGrid/NumberGrid";
+import RoomLeaderboard from "../RoomLeaderboard/RoomLeaderboard";
 import { Player } from "../../types/game";
 import { socket } from "../../services/socket";
-import RoomLeaderboard from "../RoomLeaderboard/RoomLeaderboard";
 
 interface RoomDetails {
   id: string;
@@ -34,10 +34,10 @@ const GamePage: React.FC<GamePageProps> = ({
   const navigate = useNavigate();
   const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null);
 
-  // Khi currentRoomId thay đổi, gọi API lấy danh sách phòng và lọc lấy room hiện tại
+  // Khi currentRoomId thay đổi, gọi API lấy thông tin room hiện tại
   useEffect(() => {
+    if (!currentRoomId) return;
     const fetchRoomDetails = async () => {
-      if (!currentRoomId) return;
       try {
         const response = await fetch("http://localhost:5001/room");
         if (!response.ok) {
@@ -57,36 +57,50 @@ const GamePage: React.FC<GamePageProps> = ({
 
   const handleLeaveRoom = () => {
     if (!currentRoomId || !currentPlayer) return;
-    socket.emit("leaveRoom", { roomId: currentRoomId, playerId: currentPlayer.id });
+    socket.emit("leaveRoom", {
+      roomId: currentRoomId,
+      playerId: currentPlayer.id,
+    });
     navigate("/");
   };
 
+  // Nếu chưa có thông tin về phòng hoặc người chơi, hiển thị Loading...
+  if (!currentRoomId || !currentPlayer) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <p className="text-xl text-gray-700">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col max-w-2xs lg:flex-row items-start justify-center gap-8 p-6 lg:p-12 min-h-screen bg-gray-100">
-  {/* Game Room and Number Grid */}
-  <div className="space-y-6 w-full bg-white p-6 rounded-2xl shadow-lg">
-    <GameRoom
-      timeRemaining={timeRemaining}
-      playersCount={roomDetails ? roomDetails.playersCount : players.length}
-      isGameStarted={isGameStarted}
-      isHost={currentPlayer?.isHost ?? false}
-      onLeaveRoom={handleLeaveRoom}
-    />
-    <NumberGrid 
-      isHost={currentPlayer?.isHost ?? false} 
-      roomId={currentRoomId!} 
-      playerId={currentPlayer!.id} 
-    />
-  </div>
+    <div className="flex flex-col lg:flex-row items-start justify-center gap-8 p-4 lg:p-8 min-h-screen bg-gray-100">
+      {/* Khối GameRoom và NumberGrid */}
+      <div className="space-y-6 w-full lg:w-7/10 bg-white p-4 lg:p-8 rounded-3xl shadow-2xl">
+        <GameRoom
+          timeRemaining={timeRemaining}
+          playersCount={roomDetails ? roomDetails.playersCount : players.length}
+          isGameStarted={isGameStarted}
+          isHost={currentPlayer.isHost ?? false}
+          onLeaveRoom={handleLeaveRoom}
+        />
+        <NumberGrid
+          isHost={currentPlayer.isHost ?? false}
+          roomId={currentRoomId}
+          playerId={currentPlayer.id}
+          onStartGame={() => {
+            socket.emit("game:start", { roomId: currentRoomId });
+          }}
+        />
+      </div>
 
-  {/* Leaderboard Section */}
-  <div className="w-full lg:w-1/3">
-    <div className="bg-white p-6 rounded-2xl shadow-lg">
-      <RoomLeaderboard roomId={currentRoomId!} />
+      {/* Khối Leaderboard */}
+      <div className="w-full lg:w-1/3">
+        <div className="bg-white p-6 rounded-3xl shadow-2xl h-full">
+          <RoomLeaderboard roomId={currentRoomId} />
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-
   );
 };
 

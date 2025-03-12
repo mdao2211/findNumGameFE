@@ -12,10 +12,10 @@ interface GameRoomProps {
 
 const GameRoom: React.FC<GameRoomProps> = ({
   playersCount,
-  isHost,
+  // isHost,
   onLeaveRoom,
 }) => {
-  console.log("GameRoom - isHost:", isHost);
+  // console.log("GameRoom - isHost:", isHost);
   return (
     <div className="bg-white rounded-lg p-6 shadow-xl">
       <div className="flex justify-between items-center mb-4">
@@ -24,12 +24,11 @@ const GameRoom: React.FC<GameRoomProps> = ({
           <span className="font-semibold">Players: {playersCount}</span>
         </div>
         <button
-            onClick={onLeaveRoom}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-1"
-          >
-            <LogOut className="w-5 h-5" />
-            Leave Room
-          </button>
+          onClick={onLeaveRoom}
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex items-center gap-1">
+          <LogOut className="w-5 h-5" />
+          Leave Room
+        </button>
       </div>
     </div>
   );

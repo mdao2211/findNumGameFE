@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/Components/JoinPage/JoinPage.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import JoinGame from "../JoinGame/JoinGame";
 import JoinRoom from "../JoinRoom/JoinRoom";
 import Leaderboard from "../LeaderBoard/LeaderBoard";
-import { Player } from "../../types/game";
+import { JoinRoomResponse, Player } from "../../types/game";
 import { socket } from "../../services/socket";
 
 interface JoinPageProps {
@@ -34,6 +35,7 @@ const JoinPage: React.FC<JoinPageProps> = ({
       const data: Player = await response.json();
       setPlayer(data);
       setCurrentPlayer(data);
+      localStorage.setItem("currentPlayer", JSON.stringify(data));
     } catch (error) {
       console.error("Error creating player:", error);
     }
@@ -41,10 +43,24 @@ const JoinPage: React.FC<JoinPageProps> = ({
 
   const handleJoinRoom = (roomId: string) => {
     if (!player) return;
+    localStorage.setItem("currentRoomId", roomId);
     setCurrentRoomId(roomId);
-    // Gửi payload chứa roomId và playerId
-    socket.emit("joinRoom", { roomId, playerId: player.id });
-    navigate("/game");
+    socket.emit(
+      "joinRoom",
+      { roomId, playerId: player.id },
+      (response: JoinRoomResponse) => {
+        if (response.success && response.player) {
+          setCurrentPlayer(response.player);
+          localStorage.setItem(
+            "currentPlayer",
+            JSON.stringify(response.player)
+          );
+          navigate("/game");
+        } else {
+          alert(response.error || "Join room failed");
+        }
+      }
+    );
   };
 
   return (
@@ -53,9 +69,7 @@ const JoinPage: React.FC<JoinPageProps> = ({
         <JoinGame onJoin={handleNameSubmit} />
       ) : (
         <div>
-          <h2 className="text-xl font-semibold mb-2">
-            Welcome, {player.name}
-          </h2>
+          <h2 className="text-xl font-semibold mb-2">Welcome, {player.name}</h2>
           <JoinRoom onJoin={handleJoinRoom} player={player} />
         </div>
       )}

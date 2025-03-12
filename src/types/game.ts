@@ -13,3 +13,8 @@ export interface GameState {
   winner: Player | null;
   timeRemaining: number;
 }
+export interface JoinRoomResponse {
+  success: boolean;
+  player?: Player;
+  error?: string;
+}
