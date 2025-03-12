@@ -89,9 +89,9 @@ const GamePage: React.FC<GamePageProps> = ({
           isHost={currentPlayer.isHost ?? false}
           roomId={currentRoomId}
           playerId={currentPlayer.id}
-          onStartGame={() => {
-            socket.emit("game:start", { roomId: currentRoomId });
-          }}
+          // onStartGame={() => {
+          //   socket.emit("game:start", { roomId: currentRoomId });
+          // }}
         />
       </div>
 
