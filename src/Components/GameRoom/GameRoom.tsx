@@ -3,6 +3,7 @@ import React from "react";
 import { LogOut, Users } from "lucide-react";
 
 interface GameRoomProps {
+  onStartGame: () => void; // Add this line
   timeRemaining: number;
   playersCount: number;
   isGameStarted: boolean;

@@ -37,10 +37,9 @@ const NumberGrid: React.FC<NumberGridProps> = ({
 
   const handleStartGame = () => {
     if (!isHost) return;
-    // Gửi event bắt đầu game với roomId và playerId
-    socket.emit("game:start", { roomId, playerId });
-
-    // Log để debug
+    socket.emit("game:start", { roomId, playerId }, (response: unknown) => {
+      console.log("game:start response", response);
+    });
     console.log("Sending game:start event", { roomId, playerId, isHost });
   };
 
@@ -143,7 +142,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
       socket.off("connect_error");
       socket.off("error");
     };
-  }, [playerId]);
+  }, [isHost, playerId, roomId]);
 
   return (
     <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">

@@ -1,4 +1,3 @@
-// src/Components/GamePage/GamePage.tsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import GameRoom from "../GameRoom/GameRoom";
@@ -56,6 +55,28 @@ const GamePage: React.FC<GamePageProps> = ({
     fetchRoomDetails();
   }, [currentRoomId]);
 
+  // Lắng nghe sự kiện cập nhật số người chơi qua WebSocket
+  useEffect(() => {
+    socket.on("room:playerCountUpdated", (data: { playersCount: number }) => {
+      console.log("Room player count updated:", data.playersCount);
+      setRoomDetails((prev) =>
+        prev ? { ...prev, playersCount: data.playersCount } : prev
+      );
+      console.log("Room player count updated:", data.playersCount);
+      setRoomDetails((prev) =>
+        prev ? { ...prev, playersCount: data.playersCount } : prev
+      );
+    });
+
+    return () => {
+      socket.off("room:playerCountUpdated");
+    };
+  }, []);
+
+  const handleStartGame = () => {
+    socket.emit("startGame", { roomId: currentRoomId });
+  };
+
   const handleLeaveRoom = () => {
     if (!currentRoomId || !currentPlayer) return;
     socket.emit("leaveRoom", {
@@ -79,6 +100,8 @@ const GamePage: React.FC<GamePageProps> = ({
       {/* Khối GameRoom và NumberGrid */}
       <div className="space-y-6 w-full lg:w-7/10 bg-white p-4 lg:p-8 rounded-3xl shadow-2xl">
         <GameRoom
+          // Removed duplicate onStartGame prop
+          onStartGame={handleStartGame}
           timeRemaining={timeRemaining}
           playersCount={roomDetails ? roomDetails.playersCount : players.length}
           isGameStarted={isGameStarted}
@@ -89,9 +112,6 @@ const GamePage: React.FC<GamePageProps> = ({
           isHost={currentPlayer.isHost ?? false}
           roomId={currentRoomId}
           playerId={currentPlayer.id}
-          // onStartGame={() => {
-          //   socket.emit("game:start", { roomId: currentRoomId });
-          // }}
         />
       </div>
 

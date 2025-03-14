@@ -1,11 +1,19 @@
+// src/store/gameStore.ts
 import { create } from "zustand";
-import { GameState, Player } from "../types/game";
+import { Player } from "../types/game";
 
-interface GameStore extends GameState {
+// Định nghĩa kiểu cho store theo shape bạn đang dùng
+interface GameStore {
+  players: Player[];
+  targetNumber: number | null;
+  isGameStarted: boolean;
+  winner: Player | null;
+  timeRemaining: number;
+  // Các hành động (actions)
   addPlayer: (player: Player) => void;
   removePlayer: (playerId: string) => void;
   updatePlayerScore: (playerId: string, score: number) => void;
-  setCurrentNumber: (number: number | null) => void;
+  setTargetNumber: (number: number | null) => void;
   startGame: () => void;
   endGame: (winner: Player | null) => void;
   setTimeRemaining: (time: number) => void;
@@ -13,7 +21,7 @@ interface GameStore extends GameState {
 
 export const useGameStore = create<GameStore>((set) => ({
   players: [],
-  currentNumber: null,
+  targetNumber: null,
   isGameStarted: false,
   winner: null,
   timeRemaining: 0,
@@ -30,7 +38,7 @@ export const useGameStore = create<GameStore>((set) => ({
         p.id === playerId ? { ...p, score } : p
       ),
     })),
-  setCurrentNumber: (number) => set({ currentNumber: number }),
+  setTargetNumber: (number) => set({ targetNumber: number }),
   startGame: () => set({ isGameStarted: true, winner: null }),
   endGame: (winner) => set({ isGameStarted: false, winner }),
   setTimeRemaining: (time) => set({ timeRemaining: time }),
