@@ -10,7 +10,12 @@ interface NumberGridProps {
   playerCount: number; // thêm playerCount vào đây
 }
 
-const NumberGrid: React.FC<NumberGridProps> = ({ isHost, roomId, playerId, playerCount }) => {
+const NumberGrid: React.FC<NumberGridProps> = ({
+  isHost,
+  roomId,
+  playerId,
+  playerCount,
+}) => {
   const [gameState, setGameState] = useState<GameState>({
     targetNumber: null,
     score: 0,
@@ -43,7 +48,11 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, roomId, playerId, playe
   };
 
   const handleNumberClick = (number: number) => {
-    if (!gameState.isStarted || gameState.isCompleted || gameState.targetNumber === null)
+    if (
+      !gameState.isStarted ||
+      gameState.isCompleted ||
+      gameState.targetNumber === null
+    )
       return;
     if (number === gameState.targetNumber) {
       // Đoán đúng: cộng điểm và flash màu xanh trong 1 giây, sau đó reset flash
@@ -166,7 +175,11 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, roomId, playerId, playe
       interval = window.setInterval(() => {
         setGameState((prev) => {
           if (prev.timer > 0) {
-            return { ...prev, timer: prev.timer - 1, isCompleted: prev.timer - 1 <= 0 };
+            return {
+              ...prev,
+              timer: prev.timer - 1,
+              isCompleted: prev.timer - 1 <= 0,
+            };
           }
           return prev;
         });
@@ -185,31 +198,34 @@ const NumberGrid: React.FC<NumberGridProps> = ({ isHost, roomId, playerId, playe
             Number Finding Game
           </h1>
           <h3 className="font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            You have 3 minutes to get the highest score by finding correct numbers.
+            You have 3 minutes to get the highest score by finding correct
+            numbers.
+          </h3>
+          <h3 className="font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Please be patient. Waiting for another host to start the game...
           </h3>
           {!gameState.isStarted &&
-  (isHost ? (
-    playerCount >= 2 ? (
-      <button
-        onClick={handleStartGame}
-        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
-      >
-        <RefreshCcw className="w-5 h-5" />
-        Start Game
-      </button>
-    ) : (
-      <div className="flex items-center gap-2 text-gray-700 font-medium">
-        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
-        Waiting another host to start game...
-      </div>
-    )
-  ) : (
-    <div className="flex items-center gap-2 text-gray-700 font-medium">
-      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
-      Waiting for host to start the game...
-    </div>
-  ))}
-
+            (isHost ? (
+              playerCount >= 2 ? (
+                <button
+                  onClick={handleStartGame}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
+                  <RefreshCcw className="w-5 h-5" />
+                  Start Game
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 text-gray-700 font-medium">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
+                  Waiting another host to start game...
+                </div>
+              )
+            ) : (
+              <div className="flex items-center gap-2 text-gray-700 font-medium">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
+                Waiting for host to start the game...
+              </div>
+            ))}
         </div>
 
         {gameState.isStarted && (
