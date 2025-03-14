@@ -26,15 +26,12 @@ interface GamePageProps {
 
 const GamePage: React.FC<GamePageProps> = ({
   players,
-  timeRemaining,
-  isGameStarted,
   currentRoomId,
   currentPlayer,
 }) => {
   const navigate = useNavigate();
   const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null);
 
-  // Khi currentRoomId thay đổi, gọi API lấy thông tin room hiện tại
   useEffect(() => {
     if (!currentRoomId) return;
     const fetchRoomDetails = async () => {
@@ -55,13 +52,8 @@ const GamePage: React.FC<GamePageProps> = ({
     fetchRoomDetails();
   }, [currentRoomId]);
 
-  // Lắng nghe sự kiện cập nhật số người chơi qua WebSocket
   useEffect(() => {
     socket.on("room:playerCountUpdated", (data: { playersCount: number }) => {
-      console.log("Room player count updated:", data.playersCount);
-      setRoomDetails((prev) =>
-        prev ? { ...prev, playersCount: data.playersCount } : prev
-      );
       console.log("Room player count updated:", data.playersCount);
       setRoomDetails((prev) =>
         prev ? { ...prev, playersCount: data.playersCount } : prev
@@ -73,10 +65,6 @@ const GamePage: React.FC<GamePageProps> = ({
     };
   }, []);
 
-  const handleStartGame = () => {
-    socket.emit("startGame", { roomId: currentRoomId });
-  };
-
   const handleLeaveRoom = () => {
     if (!currentRoomId || !currentPlayer) return;
     socket.emit("leaveRoom", {
@@ -86,7 +74,6 @@ const GamePage: React.FC<GamePageProps> = ({
     navigate("/");
   };
 
-  // Nếu chưa có thông tin về phòng hoặc người chơi, hiển thị Loading...
   if (!currentRoomId || !currentPlayer) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -97,25 +84,18 @@ const GamePage: React.FC<GamePageProps> = ({
 
   return (
     <div className="w-full flex flex-col lg:flex-row items-start justify-center gap-8 p-4 lg:p-8 min-h-screen bg-gray-100">
-      {/* Khối GameRoom và NumberGrid */}
       <div className="space-y-6 w-full lg:w-7/10 bg-white p-4 lg:p-8 rounded-3xl shadow-2xl">
         <GameRoom
-          // Removed duplicate onStartGame prop
-          onStartGame={handleStartGame}
-          timeRemaining={timeRemaining}
           playersCount={roomDetails ? roomDetails.playersCount : players.length}
-          isGameStarted={isGameStarted}
-          isHost={currentPlayer.isHost ?? false}
           onLeaveRoom={handleLeaveRoom}
         />
         <NumberGrid
           isHost={currentPlayer.isHost ?? false}
           roomId={currentRoomId}
           playerId={currentPlayer.id}
+          playerCount={players.length}
         />
       </div>
-
-      {/* Khối Leaderboard */}
       <div className="w-full lg:w-1/3">
         <div className="bg-white p-6 rounded-3xl shadow-2xl h-full">
           <RoomLeaderboard roomId={currentRoomId} />

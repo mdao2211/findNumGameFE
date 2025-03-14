@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/Components/RoomLeaderboard/RoomLeaderboard.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { Trophy } from "lucide-react";
+import { Trophy, RefreshCcw, Crown } from "lucide-react";
 import { Player } from "../../types/game";
 
 interface RoomLeaderboardProps {
@@ -37,9 +37,9 @@ const RoomLeaderboard: React.FC<RoomLeaderboardProps> = ({ roomId }) => {
   useEffect(() => {
     if (roomId) {
       fetchLeaderboard();
-      // Nếu bạn muốn tự động refresh leaderboard mỗi 30 giây, uncomment đoạn sau:
-      // const interval = setInterval(fetchLeaderboard, 30000);
-      // return () => clearInterval(interval);
+      // Refresh leaderboard tự động mỗi 30 giây (có thể điều chỉnh thời gian hoặc loại bỏ nếu không cần)
+      const interval = setInterval(fetchLeaderboard, 10000);
+      return () => clearInterval(interval);
     }
   }, [roomId]);
 
@@ -49,29 +49,36 @@ const RoomLeaderboard: React.FC<RoomLeaderboardProps> = ({ roomId }) => {
 
   return (
     <div className="bg-white rounded-lg p-6 shadow-xl mt-4">
-      <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-        <Trophy className="w-6 h-6 text-yellow-500" />
-        Room Leaderboard
-      </h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold flex items-center gap-2">
+          <Trophy className="w-6 h-6 text-yellow-500" />
+          Room Leaderboard
+        </h2>
+        <button
+          onClick={fetchLeaderboard}
+          className="p-2 rounded-full hover:bg-gray-200"
+        >
+          <RefreshCcw className="w-5 h-5" />
+        </button>
+      </div>
       {loading && <p className="text-gray-600">Loading leaderboard...</p>}
       {error && <p className="text-red-600">Error: {error}</p>}
       {!loading && !error && (
         <div className="space-y-2">
           {sortedPlayers.map((player, index) => {
             let borderClass = "";
-            // Kiểm tra vị trí của người chơi và áp dụng khung với màu sắc tương ứng
             if (index === 0) {
               borderClass = "bg-yellow-500"; // Vàng
             } else if (index === 1) {
-              borderClass = "bg-gray-400"; // Bạc (bạn có thể tùy chỉnh màu)
+              borderClass = "bg-gray-500"; // Bạc
             } else if (index === 2) {
-              borderClass = "bg-orange-500"; // Đồng (bạn có thể tùy chỉnh màu)
+              borderClass = "bg-orange-700"; // Đồng
             }
-
             return (
               <div
                 key={player.id}
-                className={`flex justify-between items-center p-2 bg-gray-50 rounded ${borderClass}`}>
+                className={`flex justify-between items-center p-2 bg-gray-50 rounded ${borderClass}`}
+              >
                 <span>{player.name}</span>
                 <span className="font-semibold">{player.score || 0}</span>
               </div>

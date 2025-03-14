@@ -9,7 +9,7 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-[url(/src/img/find_num.avif)] bg-no-repeat bg-cover p-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-8xl mx-auto">
           <AppRoutes />
           <ToastContainer position="top-center" autoClose={3000} />
         </div>

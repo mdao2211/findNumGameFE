@@ -7,6 +7,7 @@ import { Player } from "../../types/game";
 interface JoinRoomProps {
   player: Player;
   onJoin: (roomId: string) => void;
+  isHost: boolean;
 }
 
 interface Room {
@@ -17,24 +18,30 @@ interface Room {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
+const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [showCreateRoomForm, setShowCreateRoomForm] = useState(false);
 
-  useEffect(() => {
-    const fetchRooms = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/room`);
-        if (!response.ok) {
-          throw new Error("Error fetching rooms");
-        }
-        const data: Room[] = await response.json();
-        setRooms(data);
-      } catch (error) {
-        console.error("Error fetching rooms: ", error);
+  const fetchRooms = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/room`);
+      if (!response.ok) {
+        throw new Error("Error fetching rooms");
       }
-    };
+      const data: Room[] = await response.json();
+      setRooms(data);
+    } catch (error) {
+      console.error("Error fetching rooms: ", error);
+    }
+  };
+
+  useEffect(() => {
+    // Lấy danh sách phòng khi component mount
     fetchRooms();
+
+    // Polling cập nhật danh sách phòng mỗi 10 giây
+    const interval = setInterval(fetchRooms, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -74,8 +81,8 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
         throw new Error("Error creating room");
       }
       const room: Room = await response.json();
-      // Sử dụng room.id từ kết quả trả về để join vào phòng mới tạo
-      socket.emit("joinRoom", { roomId: room.id, playerId: player.id });
+      // Khi tạo phòng mới, host tự động join với isHost = true
+      socket.emit("joinRoom", { roomId: room.id, playerId: player.id, isHost: true });
       onJoin(room.id);
       setShowCreateRoomForm(false);
     } catch (error) {
@@ -103,7 +110,8 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin }) => {
       alert("Vui lòng nhập tên của bạn");
       return;
     }
-    socket.emit("joinRoom", { roomId, playerId: player.id });
+    // Bao gồm cả isHost khi emit joinRoom
+    socket.emit("joinRoom", { roomId, playerId: player.id, isHost });
     onJoin(roomId);
   };
 

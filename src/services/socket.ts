@@ -8,4 +8,6 @@ const SOCKET_URL = API_BASE_URL;
 
 export const socket = io(SOCKET_URL, {
   withCredentials: true,
+  reconnection: true,
+  transports: ['websocket'], 
 });
