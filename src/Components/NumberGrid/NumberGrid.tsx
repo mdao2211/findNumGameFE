@@ -201,9 +201,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
             You have 3 minutes to get the highest score by finding correct
             numbers.
           </h3>
-          <h3 className="font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Please be patient. Waiting for another host to start the game...
-          </h3>
+          
           {!gameState.isStarted &&
             (isHost ? (
               playerCount >= 2 ? (
