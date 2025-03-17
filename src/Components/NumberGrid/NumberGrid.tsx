@@ -30,6 +30,15 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   // Mảng dùng cho flash màu sai (vô hiệu hóa tạm thời nút sai)
   const [incorrectNumbers, setIncorrectNumbers] = useState<number[]>([]);
 
+  // useEffect(() => {
+  //   console.log("NumberGrid mounted. Initial playerCount:", playerCount);
+  // }, []);
+
+  // useEffect(() => {
+  //   console.log("playerCount updated:", playerCount);
+  // }, [playerCount]);
+
+
   const shuffleNumbers = (): number[] => {
     const nums = Array.from({ length: 100 }, (_, i) => i + 1);
     for (let i = nums.length - 1; i > 0; i--) {
@@ -42,7 +51,8 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   const handleStartGame = () => {
     if (!isHost) return;
     socket.emit("game:start", { roomId, playerId }, (response: unknown) => {
-      // console.log("game:start response", response);
+      console.log("game:start response", response);
+      
     });
     // console.log("Sending game:start event", { roomId, playerId, isHost });
   };
@@ -189,7 +199,6 @@ const NumberGrid: React.FC<NumberGridProps> = ({
       if (interval) clearInterval(interval);
     };
   }, [gameState.isStarted, gameState.isCompleted]);
-
   return (
     <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8">
@@ -215,7 +224,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
               ) : (
                 <div className="flex items-center gap-2 text-gray-700 font-medium">
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
-                  Waiting another host to start game...
+                  Waiting another player to start game...
                 </div>
               )
             ) : (

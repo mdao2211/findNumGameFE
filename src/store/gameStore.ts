@@ -27,7 +27,14 @@ export const useGameStore = create<GameStore>((set) => ({
   timeRemaining: 0,
 
   addPlayer: (player) =>
-    set((state) => ({ players: [...state.players, player] })),
+    set((state) => {
+      // Nếu đã có player với cùng id thì không thêm nữa
+      if (state.players.some((p) => p.id === player.id)) {
+        console.warn("Player already exists:", player);
+        return {};
+      }
+      return { players: [...state.players, player] };
+    }),
   removePlayer: (playerId) =>
     set((state) => ({
       players: state.players.filter((p) => p.id !== playerId),
