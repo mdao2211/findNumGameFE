@@ -14,7 +14,7 @@ const GameRoom: React.FC<GameRoomProps> = ({ playersCount, onLeaveRoom }) => {
         <div className="flex items-center gap-2">
           {/* <Users className="w-6 h-6 text-blue-500" /> */}
           {/* <span className="font-semibold">Players: {playersCount}</span> */}
-          <span className="font-semibold">Number Finding Game</span>
+          <span className="font-bold text-2xl text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Number Finding Game</span>
 
         </div>
         <button

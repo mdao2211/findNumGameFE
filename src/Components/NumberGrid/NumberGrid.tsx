@@ -29,15 +29,8 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
   // Mảng dùng cho flash màu sai (vô hiệu hóa tạm thời nút sai)
   const [incorrectNumbers, setIncorrectNumbers] = useState<number[]>([]);
-
-  // useEffect(() => {
-  //   console.log("NumberGrid mounted. Initial playerCount:", playerCount);
-  // }, []);
-
-  // useEffect(() => {
-  //   console.log("playerCount updated:", playerCount);
-  // }, [playerCount]);
-
+  // State để áp dụng hiệu ứng random khi xáo trộn bảng số
+  const [shuffling, setShuffling] = useState(false);
 
   const shuffleNumbers = (): number[] => {
     const nums = Array.from({ length: 100 }, (_, i) => i + 1);
@@ -52,9 +45,16 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     if (!isHost) return;
     socket.emit("game:start", { roomId, playerId }, (response: unknown) => {
       console.log("game:start response", response);
-      
     });
-    // console.log("Sending game:start event", { roomId, playerId, isHost });
+  };
+
+  // Hàm kích hoạt hiệu ứng random
+  const triggerShuffleEffect = () => {
+    setShuffling(true);
+    setTimeout(() => {
+      setNumbers(shuffleNumbers());
+      setShuffling(false);
+    }, 300); // Hiệu ứng 500ms
   };
 
   const handleNumberClick = (number: number) => {
@@ -65,7 +65,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     )
       return;
     if (number === gameState.targetNumber) {
-      // Đoán đúng: cộng điểm và flash màu xanh trong 1 giây, sau đó reset flash
+      // Đoán đúng: cộng điểm và flash màu xanh trong 1 giây
       setGameState((prev) => ({ ...prev, score: prev.score + 10 }));
       setSelectedNumbers((prev) =>
         prev.includes(number) ? prev : [...prev, number]
@@ -79,9 +79,10 @@ const NumberGrid: React.FC<NumberGridProps> = ({
       });
       setTimeout(() => {
         setSelectedNumbers((prev) => prev.filter((n) => n !== number));
+        triggerShuffleEffect();
       }, 1000);
     } else {
-      // Đoán sai: chỉ trừ điểm, flash màu đỏ trong 1 giây, sau đó cho phép chọn lại
+      // Đoán sai: trừ điểm, flash màu đỏ trong 1 giây
       setGameState((prev) => ({ ...prev, score: Math.max(0, prev.score - 5) }));
       setIncorrectNumbers((prev) => [...prev, number]);
       socket.emit("player:wrongGuess", {
@@ -93,6 +94,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
       });
       setTimeout(() => {
         setIncorrectNumbers((prev) => prev.filter((n) => n !== number));
+        triggerShuffleEffect();
       }, 1000);
     }
   };
@@ -103,12 +105,9 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
 
-  // Listener cho các sự kiện game (trừ time update)
+  // Các listener cho các sự kiện từ socket
   useEffect(() => {
-    // console.log("Component mounted with props:", { isHost, roomId, playerId });
-
     const handleGameStarted = (data: any) => {
-      // console.log("Received game:started event", data);
       const { targetNumber, timeRemaining } = data;
       setGameState({
         targetNumber,
@@ -117,16 +116,13 @@ const NumberGrid: React.FC<NumberGridProps> = ({
         isStarted: true,
         isCompleted: false,
       });
-      // Xáo trộn danh sách số chỉ 1 lần khi game bắt đầu
       setNumbers(shuffleNumbers());
       setSelectedNumbers([]);
       setIncorrectNumbers([]);
     };
 
     const handleTargetUpdate = (newTarget: number) => {
-      // Chỉ cập nhật targetNumber, không thêm số cũ vào selectedNumbers nữa
       setGameState((prev) => ({ ...prev, targetNumber: newTarget }));
-      // console.log("Received new target number:", newTarget);
     };
 
     const handleGameEnd = () => {
@@ -161,10 +157,8 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     };
   }, [roomId, playerId]);
 
-  // Listener riêng cho time update từ socket
   useEffect(() => {
     const handleTimeUpdate = (time: number) => {
-      // console.log("Received time update from socket:", time);
       setGameState((prev) => ({
         ...prev,
         timer: time,
@@ -178,7 +172,6 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     };
   }, [roomId]);
 
-  // Manual countdown nếu FE không nhận đủ các event từ socket
   useEffect(() => {
     let interval: number;
     if (gameState.isStarted && !gameState.isCompleted) {
@@ -199,6 +192,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
       if (interval) clearInterval(interval);
     };
   }, [gameState.isStarted, gameState.isCompleted]);
+
   return (
     <div className="min-h-screen bg-gray-100 p-8 flex items-center justify-center">
       <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-8">
@@ -207,8 +201,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
             Number Finding Game
           </h1>
           <h3 className="font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            You have 3 minutes to get the highest score by finding correct
-            numbers.
+            You have 3 minutes to get the highest score by finding correct numbers.
           </h3>
           
           {!gameState.isStarted &&
@@ -282,7 +275,9 @@ const NumberGrid: React.FC<NumberGridProps> = ({
               onClick={() => handleNumberClick(number)}
               disabled={!gameState.isStarted || gameState.isCompleted}
               className={`
-                aspect-square flex items-center justify-center text-lg font-semibold rounded-xl transition-all duration-200 ${
+                aspect-square flex items-center justify-center text-lg font-semibold rounded-xl transition-all duration-200
+                ${shuffling ? "animate-pulse" : ""}
+                ${
                   selectedNumbers.includes(number)
                     ? "bg-green-500/10 text-green-600 ring-2 ring-green-500"
                     : incorrectNumbers.includes(number)
@@ -300,3 +295,4 @@ const NumberGrid: React.FC<NumberGridProps> = ({
 };
 
 export default NumberGrid;
+
