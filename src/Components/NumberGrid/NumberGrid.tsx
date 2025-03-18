@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect, useCallback } from "react";
 import { RefreshCcw } from "lucide-react";
 import { Player, GameState } from "../../types/game";
@@ -27,7 +28,9 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   });
   const [numbers, setNumbers] = useState<number[]>([]);
   // selectedNumbers: mapping từ số → màu của người chơi (các số đã đoán đúng)
-  const [selectedNumbers, setSelectedNumbers] = useState<Record<number, string>>({});
+  const [selectedNumbers, setSelectedNumbers] = useState<
+    Record<number, string>
+  >({});
   const [incorrectNumbers, setIncorrectNumbers] = useState<number[]>([]);
 
   const shuffleNumbers = (): number[] => {
@@ -62,7 +65,10 @@ const NumberGrid: React.FC<NumberGridProps> = ({
       return;
 
     // Nếu số đã được đoán đúng (đã có trong selectedNumbers) hoặc đang hiển thị sai thì không cho click
-    if (selectedNumbers[number] !== undefined || incorrectNumbers.includes(number))
+    if (
+      selectedNumbers[number] !== undefined ||
+      incorrectNumbers.includes(number)
+    )
       return;
 
     if (number === gameState.targetNumber) {
@@ -243,15 +249,15 @@ const NumberGrid: React.FC<NumberGridProps> = ({
             Number Finding Game
           </h1>
           <h3 className="font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            You have 3 minutes to get the highest score by finding correct numbers.
+            You have 3 minutes to get the highest score by finding correct
+            numbers.
           </h3>
           {!gameState.isStarted &&
             (isHost ? (
               playerCount >= 2 ? (
                 <button
                   onClick={handleStartGame}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                >
+                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
                   <RefreshCcw className="w-5 h-5" />
                   Start Game
                 </button>
@@ -310,8 +316,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
               {isHost ? (
                 <button
                   onClick={handleRestartGame}
-                  className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition"
-                >
+                  className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition">
                   Restart Game
                 </button>
               ) : (
@@ -357,9 +362,12 @@ const NumberGrid: React.FC<NumberGridProps> = ({
                       ? "bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md text-gray-800 hover:scale-[1.03]"
                       : ""
                   }
-                `}
-              >
-                <NumberButton number={number} selected={isSelected} color={selectedColor} />
+                `}>
+                <NumberButton
+                  number={number}
+                  selected={isSelected}
+                  color={selectedColor}
+                />
               </button>
             );
           })}
