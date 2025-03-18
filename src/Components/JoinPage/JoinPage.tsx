@@ -70,7 +70,7 @@ const JoinPage: React.FC<JoinPageProps> = ({
         <JoinGame onJoin={handleNameSubmit} />
       ) : (
         <div>
-          <h2 className="text-xl text-yellow-500 font-semibold mb-2">Welcome, {player.name}</h2>
+          <h2 className="text-3xl text-yellow-500 font-semibold mb-2">Welcome, {player.name}. Hope you have a great play!</h2>
           <JoinRoom onJoin={handleJoinRoom} player={player} isHost={false} />
         </div>
       )}

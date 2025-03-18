@@ -19,7 +19,7 @@ const JoinGame: React.FC<JoinGameProps> = ({ onJoin }) => {
 
   return (
     <div className="bg-white rounded-lg p-8 shadow-xl">
-      <h1 className="text-5xl font-bold text-center mb-6">
+      <h1 className="text-6xl font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent text-center mb-6">
         Find the Number Game
       </h1>
       <div className="flex gap-4">

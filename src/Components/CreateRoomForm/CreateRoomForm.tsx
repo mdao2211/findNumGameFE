@@ -1,5 +1,6 @@
 // src/Components/CreateRoomForm/CreateRoomForm.tsx
 import React, { useState } from "react";
+import { toast } from "react-toastify";
 
 interface CreateRoomFormProps {
   onCreateRoom: (roomName: string) => void;
@@ -11,7 +12,7 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({ onCreateRoom }) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!roomName.trim()) {
-      alert("Vui lòng nhập tên phòng");
+      toast.error("Vui lòng nhập tên phòng");      
       return;
     }
     onCreateRoom(roomName);
@@ -30,6 +31,7 @@ const CreateRoomForm: React.FC<CreateRoomFormProps> = ({ onCreateRoom }) => {
           <input
             type="text"
             id="roomName"
+            placeholder="Nhập tên phòng..."
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
             className="rounded border border-gray-200 text-sm w-full p-2"

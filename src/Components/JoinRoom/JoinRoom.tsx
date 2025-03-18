@@ -117,7 +117,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
 
   return (
     <div className="bg-white rounded-lg p-8 shadow-xl">
-      <h1 className="text-3xl font-bold text-center mb-6">
+      <h1 className="text-6xl font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent text-center mb-6">
         Tham gia phòng chơi
       </h1>
       {showCreateRoomForm ? (
@@ -137,7 +137,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
           <div className="mb-4">
             <button
               onClick={handleShowCreateRoomForm}
-              className="w-full px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+              className="text-2xl w-full px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
             >
               Tạo phòng mới
             </button>
