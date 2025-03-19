@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { RefreshCcw } from "lucide-react";
 import { Player, GameState } from "../../types/game";
 import { socket } from "../../services/socket";
@@ -27,91 +27,94 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     isCompleted: false,
   });
   const [numbers, setNumbers] = useState<number[]>([]);
-  // selectedNumbers: mapping từ số → màu của người chơi (các số đã đoán đúng)
   const [selectedNumbers, setSelectedNumbers] = useState<
     Record<number, string>
   >({});
   const [incorrectNumbers, setIncorrectNumbers] = useState<number[]>([]);
 
-  const shuffleNumbers = (): number[] => {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const shuffleNumbers = useCallback((): number[] => {
     const nums = Array.from({ length: 100 }, (_, i) => i + 1);
     for (let i = nums.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [nums[i], nums[j]] = [nums[j], nums[i]];
     }
     return nums;
-  };
+  }, []);
 
-  const handleStartGame = () => {
+  const handleStartGame = useCallback(() => {
     if (!isHost) return;
     socket.emit("game:start", { roomId, playerId }, (response: unknown) => {
       console.log("game:start response", response);
     });
-  };
+  }, [isHost, roomId, playerId]);
 
-  const handleRestartGame = () => {
+  const handleRestartGame = useCallback(() => {
     if (!isHost) return;
     socket.emit("game:start", { roomId, playerId }, (response: unknown) => {
       console.log("game:restart response", response);
     });
-  };
+  }, [isHost, roomId, playerId]);
 
-  const handleNumberClick = (number: number) => {
-    if (
-      !gameState.isStarted ||
-      gameState.isCompleted ||
-      gameState.targetNumber === null
-    )
-      return;
+  const handleNumberClick = useCallback(
+    (number: number) => {
+      if (
+        !gameState.isStarted ||
+        gameState.isCompleted ||
+        gameState.targetNumber === null
+      )
+        return;
 
-    // Nếu số đã được đoán đúng (đã có trong selectedNumbers) hoặc đang hiển thị sai thì không cho click
-    if (
-      selectedNumbers[number] !== undefined ||
-      incorrectNumbers.includes(number)
-    )
-      return;
+      // Nếu số đã được đoán đúng hoặc đang hiển thị sai thì không cho click
+      if (
+        selectedNumbers[number] !== undefined ||
+        incorrectNumbers.includes(number)
+      )
+        return;
 
-    if (number === gameState.targetNumber) {
-      // Đoán đúng: cập nhật điểm ngay tức khắc
-      setGameState((prev) => ({ ...prev, score: prev.score + 10 }));
-      // Lấy màu của người chơi từ localStorage, nếu chưa có thì sinh mới và lưu lại
-      let playerColor = localStorage.getItem("playerColor");
-      if (!playerColor) {
-        playerColor =
-          "#" +
-          Math.floor(Math.random() * 16777215)
-            .toString(16)
-            .padStart(6, "0");
-        localStorage.setItem("playerColor", playerColor);
+      if (number === gameState.targetNumber) {
+        // Đoán đúng: cộng điểm và cập nhật màu cho số đã chọn
+        setGameState((prev) => ({ ...prev, score: prev.score + 10 }));
+        let playerColor = localStorage.getItem("playerColor");
+        if (!playerColor) {
+          playerColor =
+            "#" +
+            Math.floor(Math.random() * 16777215)
+              .toString(16)
+              .padStart(6, "0");
+          localStorage.setItem("playerColor", playerColor);
+        }
+        setSelectedNumbers((prev) => ({ ...prev, [number]: playerColor }));
+        socket.emit("player:correctGuess", {
+          roomId,
+          playerId,
+          points: 10,
+          guessedNumber: number,
+          targetNumber: gameState.targetNumber,
+          color: playerColor,
+        });
+      } else {
+        // Đoán sai: trừ điểm và hiển thị màu đỏ tạm thời
+        setGameState((prev) => ({
+          ...prev,
+          score: Math.max(0, prev.score - 5),
+        }));
+        setIncorrectNumbers((prev) => [...prev, number]);
+        socket.emit("player:wrongGuess", {
+          roomId,
+          playerId,
+          points: -5,
+          guessedNumber: number,
+          targetNumber: gameState.targetNumber,
+        });
+        setTimeout(() => {
+          setIncorrectNumbers((prev) => prev.filter((n) => n !== number));
+        }, 3000);
       }
-      // Cập nhật ngay state selectedNumbers để hiển thị nút với màu của người chơi
-      setSelectedNumbers((prev) => ({ ...prev, [number]: playerColor }));
-
-      // Emit event cho server để đồng bộ với các client khác
-      socket.emit("player:correctGuess", {
-        roomId,
-        playerId,
-        points: 10,
-        guessedNumber: number,
-        targetNumber: gameState.targetNumber,
-        color: playerColor,
-      });
-    } else {
-      // Đoán sai: trừ điểm và hiển thị flash màu đỏ tạm thời
-      setGameState((prev) => ({ ...prev, score: Math.max(0, prev.score - 5) }));
-      setIncorrectNumbers((prev) => [...prev, number]);
-      socket.emit("player:wrongGuess", {
-        roomId,
-        playerId,
-        points: -5,
-        guessedNumber: number,
-        targetNumber: gameState.targetNumber,
-      });
-      setTimeout(() => {
-        setIncorrectNumbers((prev) => prev.filter((n) => n !== number));
-      }, 3000);
-    }
-  };
+    },
+    [gameState, selectedNumbers, incorrectNumbers, roomId, playerId]
+  );
 
   const formatTime = useCallback((seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -119,6 +122,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
 
+  // Đăng ký các sự kiện của socket
   useEffect(() => {
     const handleGameStarted = (data: any) => {
       const { targetNumber, timeRemaining } = data;
@@ -152,7 +156,6 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     socket.on("game:targetUpdate", handleTargetUpdate);
     socket.on("game:end", handleGameEnd);
     socket.on("score:updated", handleScoreUpdated);
-
     socket.on("connect_error", (error) => {
       console.error("Socket connection error:", error);
     });
@@ -168,7 +171,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
       socket.off("connect_error");
       socket.off("error");
     };
-  }, [roomId, playerId]);
+  }, [playerId, shuffleNumbers]);
 
   useEffect(() => {
     const handleTimeUpdate = (time: number) => {
@@ -185,7 +188,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     };
   }, [roomId]);
 
-  // Lắng nghe event "game:numberCorrect" để cập nhật selectedNumbers cho tất cả các client
+  // Đồng bộ số đã đoán đúng từ các client khác
   useEffect(() => {
     const handleNumberCorrect = (data: {
       guessedNumber: number;
@@ -206,6 +209,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     };
   }, []);
 
+  // Countdown timer: giảm timer mỗi giây
   useEffect(() => {
     let interval: number;
     if (gameState.isStarted && !gameState.isCompleted) {
@@ -227,16 +231,19 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     };
   }, [gameState.isStarted, gameState.isCompleted]);
 
-  // Tự động phát nhạc khi game bắt đầu
+  // Tự động phát nhạc nền khi game bắt đầu (sử dụng useRef để tránh khởi tạo lại)
   useEffect(() => {
     if (gameState.isStarted) {
-      const audio = new Audio(backgroundMusic);
-      audio.loop = true;
-      audio.play().catch((err) => {
-        console.log("Auto-play was prevented:", err);
-      });
+      if (!audioRef.current) {
+        audioRef.current = new Audio(backgroundMusic);
+        audioRef.current.loop = true;
+      }
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => console.log("Auto-play prevented:", err));
+      }
       return () => {
-        audio.pause();
+        audioRef.current?.pause();
       };
     }
   }, [gameState.isStarted]);

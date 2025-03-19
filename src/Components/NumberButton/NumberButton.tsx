@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from "react";
 
 interface NumberButtonProps {
   number: number;
@@ -6,30 +6,37 @@ interface NumberButtonProps {
   selected?: boolean;
 }
 
-const NumberButton: React.FC<NumberButtonProps> = ({ number, color, selected }) => {
-  const [dataUri, setDataUri] = useState('');
-
-  useEffect(() => {
-    const canvas = document.createElement('canvas');
-    // Đặt kích thước canvas theo mong muốn
+const NumberButton: React.FC<NumberButtonProps> = ({
+  number,
+  color,
+  selected,
+}) => {
+  // Tính toán data URI bằng useMemo, chỉ thay đổi khi number, color, hoặc selected thay đổi.
+  const dataUri = useMemo(() => {
+    const canvas = document.createElement("canvas");
     canvas.width = 60;
     canvas.height = 60;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (ctx) {
-      // Lấy màu dựa vào trạng thái selected, nếu không thì dùng màu mặc định
+      // Chọn màu dựa vào props: ưu tiên color, nếu không có thì dựa vào trạng thái selected.
       const fillColor = color || (selected ? "blue" : "black");
       ctx.fillStyle = fillColor;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.font = "32px Arial";
       ctx.fillText(number.toString(), canvas.width / 2, canvas.height / 2);
-      // Chuyển canvas thành data URI PNG
-      const uri = canvas.toDataURL("image/png");
-      setDataUri(uri);
+      return canvas.toDataURL("image/png");
     }
+    return "";
   }, [number, color, selected]);
 
-  return <img src={dataUri} alt="" className="w-full h-full object-contain" />;
+  return (
+    <img
+      src={dataUri}
+      alt={`Number ${number}`}
+      className="w-full h-full object-contain"
+    />
+  );
 };
 
-export default NumberButton;
+export default React.memo(NumberButton);

@@ -82,7 +82,11 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
       }
       const room: Room = await response.json();
       // Khi tạo phòng mới, host tự động join với isHost = true
-      socket.emit("joinRoom", { roomId: room.id, playerId: player.id, isHost: true });
+      socket.emit("joinRoom", {
+        roomId: room.id,
+        playerId: player.id,
+        isHost: true,
+      });
       onJoin(room.id);
       setShowCreateRoomForm(false);
     } catch (error) {
@@ -117,7 +121,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
 
   return (
     <div className="bg-white rounded-lg p-8 shadow-xl">
-      <h1 className="text-6xl font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent text-center mb-6">
+      <h1 className="text-5xl font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent text-center mb-6">
         Tham gia phòng chơi
       </h1>
       {showCreateRoomForm ? (
@@ -125,8 +129,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
           <div className="relative bg-white rounded-3xl p-8 shadow-2xl w-full max-w-md">
             <button
               onClick={() => setShowCreateRoomForm(false)}
-              className="absolute top-2 right-2 text-2xl font-bold text-gray-600 hover:text-gray-800"
-            >
+              className="absolute top-2 right-2 text-2xl font-bold text-gray-600 hover:text-gray-800">
               &times;
             </button>
             <CreateRoomForm onCreateRoom={handleCreateRoom} />
@@ -137,8 +140,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
           <div className="mb-4">
             <button
               onClick={handleShowCreateRoomForm}
-              className="text-2xl w-full px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-            >
+              className="text-2xl w-full px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
               Tạo phòng mới
             </button>
           </div>
@@ -151,8 +153,7 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
                 {rooms.map((room) => (
                   <li
                     key={room.id}
-                    className="flex justify-between items-center p-2 border rounded mb-2"
-                  >
+                    className="flex justify-between items-center p-2 border rounded mb-2">
                     <div>
                       <span className="font-bold">{room.name}</span>
                       <span className="ml-2 text-sm text-gray-600">
@@ -162,14 +163,12 @@ const JoinRoom: React.FC<JoinRoomProps> = ({ player, onJoin, isHost }) => {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleJoinRoom(room.id)}
-                        className="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      >
+                        className="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
                         Tham gia
                       </button>
                       <button
                         onClick={() => handleDeleteRoom(room.id)}
-                        className="px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
+                        className="px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600">
                         Delete
                       </button>
                     </div>
