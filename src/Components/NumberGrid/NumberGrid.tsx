@@ -1,16 +1,24 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+// NumberGrid.tsx
 import { useState, useEffect, useCallback, useRef } from "react";
 import { RefreshCcw } from "lucide-react";
 import { Player, GameState } from "../../types/game";
 import { socket } from "../../services/socket";
 import backgroundMusic from "../../assets/videoplayback.mp3"; // file MP3
 import NumberButton from "../NumberButton/NumberButton";
+import WinnerNotification from "../WinnerNotification/WinnerNotification";
 
 interface NumberGridProps {
   isHost: boolean;
   roomId: string;
   playerId: string;
   playerCount: number;
+  onGameComplete?: () => void;
+}
+
+// Hàm tạo số ngẫu nhiên có seed
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
 }
 
 const NumberGrid: React.FC<NumberGridProps> = ({
@@ -18,6 +26,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   roomId,
   playerId,
   playerCount,
+  onGameComplete,
 }) => {
   const [gameState, setGameState] = useState<GameState>({
     targetNumber: null,
@@ -27,17 +36,18 @@ const NumberGrid: React.FC<NumberGridProps> = ({
     isCompleted: false,
   });
   const [numbers, setNumbers] = useState<number[]>([]);
-  const [selectedNumbers, setSelectedNumbers] = useState<
-    Record<number, string>
-  >({});
+  const [selectedNumbers, setSelectedNumbers] = useState<Record<number, string>>({});
   const [incorrectNumbers, setIncorrectNumbers] = useState<number[]>([]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const shuffleNumbers = useCallback((): number[] => {
+  // Hàm xáo trộn sử dụng seed
+  const shuffleNumbers = useCallback((seed: number = 1): number[] => {
     const nums = Array.from({ length: 100 }, (_, i) => i + 1);
     for (let i = nums.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      // Tính toán số ngẫu nhiên dựa trên seed cộng với chỉ số
+      const randomValue = seededRandom(seed + i);
+      const j = Math.floor(randomValue * (i + 1));
       [nums[i], nums[j]] = [nums[j], nums[i]];
     }
     return nums;
@@ -46,35 +56,27 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   const handleStartGame = useCallback(() => {
     if (!isHost) return;
     socket.emit("game:start", { roomId, playerId }, (response: unknown) => {
-      console.log("game:start response", response);
+      // Có thể xử lý phản hồi từ server nếu cần
     });
   }, [isHost, roomId, playerId]);
 
   const handleRestartGame = useCallback(() => {
     if (!isHost) return;
     socket.emit("game:start", { roomId, playerId }, (response: unknown) => {
-      console.log("game:restart response", response);
+      // console.log("game:restart response", response);
     });
   }, [isHost, roomId, playerId]);
 
   const handleNumberClick = useCallback(
     (number: number) => {
-      if (
-        !gameState.isStarted ||
-        gameState.isCompleted ||
-        gameState.targetNumber === null
-      )
+      if (!gameState.isStarted || gameState.isCompleted || gameState.targetNumber === null)
         return;
 
-      // Nếu số đã được đoán đúng hoặc đang hiển thị sai thì không cho click
-      if (
-        selectedNumbers[number] !== undefined ||
-        incorrectNumbers.includes(number)
-      )
+      if (selectedNumbers[number] !== undefined || incorrectNumbers.includes(number))
         return;
 
       if (number === gameState.targetNumber) {
-        // Đoán đúng: cộng điểm và cập nhật màu cho số đã chọn
+        // Đoán đúng: cộng điểm và cập nhật màu
         setGameState((prev) => ({ ...prev, score: prev.score + 10 }));
         let playerColor = localStorage.getItem("playerColor");
         if (!playerColor) {
@@ -125,7 +127,8 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   // Đăng ký các sự kiện của socket
   useEffect(() => {
     const handleGameStarted = (data: any) => {
-      const { targetNumber, timeRemaining } = data;
+      // Giả sử server gửi seed trong data
+      const { targetNumber, timeRemaining, seed } = data;
       setGameState({
         targetNumber,
         score: 0,
@@ -133,7 +136,8 @@ const NumberGrid: React.FC<NumberGridProps> = ({
         isStarted: true,
         isCompleted: false,
       });
-      setNumbers(shuffleNumbers());
+      // Xáo trộn số dựa vào seed chung từ server
+      setNumbers(shuffleNumbers(seed));
       setSelectedNumbers({});
       setIncorrectNumbers([]);
     };
@@ -174,22 +178,6 @@ const NumberGrid: React.FC<NumberGridProps> = ({
   }, [playerId, shuffleNumbers]);
 
   useEffect(() => {
-    const handleTimeUpdate = (time: number) => {
-      setGameState((prev) => ({
-        ...prev,
-        timer: time,
-        isCompleted: time <= 0,
-      }));
-    };
-
-    socket.on("game:timeUpdate", handleTimeUpdate);
-    return () => {
-      socket.off("game:timeUpdate", handleTimeUpdate);
-    };
-  }, [roomId]);
-
-  // Đồng bộ số đã đoán đúng từ các client khác
-  useEffect(() => {
     const handleNumberCorrect = (data: {
       guessedNumber: number;
       playerId: string;
@@ -202,36 +190,41 @@ const NumberGrid: React.FC<NumberGridProps> = ({
         return prev;
       });
     };
-
+  
     socket.on("game:numberCorrect", handleNumberCorrect);
     return () => {
       socket.off("game:numberCorrect", handleNumberCorrect);
     };
   }, []);
-
-  // Countdown timer: giảm timer mỗi giây
+  
+  // Nếu sử dụng đếm ngược cục bộ, có thể bỏ qua effect từ socket
   useEffect(() => {
     let interval: number;
     if (gameState.isStarted && !gameState.isCompleted) {
       interval = window.setInterval(() => {
         setGameState((prev) => {
-          if (prev.timer > 0) {
+          if (prev.timer > 1) {
             return {
               ...prev,
               timer: prev.timer - 1,
-              isCompleted: prev.timer - 1 <= 0,
+              isCompleted: false,
             };
+          } else {
+            if (onGameComplete) {
+              setTimeout(() => onGameComplete(), 0);
+            }
+            clearInterval(interval);
+            return { ...prev, timer: 0, isCompleted: true };
           }
-          return prev;
         });
       }, 1000);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [gameState.isStarted, gameState.isCompleted]);
+  }, [gameState.isStarted, gameState.isCompleted, onGameComplete]);
 
-  // Tự động phát nhạc nền khi game bắt đầu (sử dụng useRef để tránh khởi tạo lại)
+  // Tự động phát nhạc nền khi game bắt đầu
   useEffect(() => {
     if (gameState.isStarted) {
       if (!audioRef.current) {
@@ -256,15 +249,15 @@ const NumberGrid: React.FC<NumberGridProps> = ({
             Number Finding Game
           </h1>
           <h3 className="font-bold text-gray-800 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            You have 3 minutes to get the highest score by finding correct
-            numbers.
+            You have 3 minutes to get the highest score by finding correct numbers.
           </h3>
           {!gameState.isStarted &&
             (isHost ? (
               playerCount >= 2 ? (
                 <button
                   onClick={handleStartGame}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg">
+                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                >
                   <RefreshCcw className="w-5 h-5" />
                   Start Game
                 </button>
@@ -293,8 +286,7 @@ const NumberGrid: React.FC<NumberGridProps> = ({
               </div>
               <div className="bg-gray-100 px-4 py-3 rounded-xl">
                 <span className="font-medium text-gray-700 text-lg">
-                  Score:{" "}
-                  <span className="text-blue-600">{gameState.score}</span>
+                  Score: <span className="text-blue-600">{gameState.score}</span>
                 </span>
               </div>
             </div>
@@ -311,28 +303,11 @@ const NumberGrid: React.FC<NumberGridProps> = ({
         )}
 
         {gameState.isCompleted && (
-          <div className="text-center mb-6 bg-red-100 p-6 rounded-xl border-2 border-red-200">
-            <h2 className="text-3xl font-bold text-red-800 mb-2 flex items-center justify-center gap-2">
-              ⏳ Time's Up!
-            </h2>
-            <p className="text-red-700 text-lg">
-              Your final score:{" "}
-              <span className="font-bold">{gameState.score}</span>
-            </p>
-            <div className="mt-4">
-              {isHost ? (
-                <button
-                  onClick={handleRestartGame}
-                  className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition">
-                  Restart Game
-                </button>
-              ) : (
-                <p className="text-gray-700">
-                  Waiting for host to restart the game...
-                </p>
-              )}
-            </div>
-          </div>
+          <WinnerNotification
+            score={gameState.score}
+            isHost={isHost}
+            handleRestartGame={handleRestartGame}
+          />
         )}
 
         <div className="grid grid-cols-10 gap-3">
@@ -369,7 +344,8 @@ const NumberGrid: React.FC<NumberGridProps> = ({
                       ? "bg-white border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 hover:shadow-md text-gray-800 hover:scale-[1.03]"
                       : ""
                   }
-                `}>
+                `}
+              >
                 <NumberButton
                   number={number}
                   selected={isSelected}

@@ -1,7 +1,5 @@
-// src/Components/RoomLeaderboard/RoomLeaderboard.tsx
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useState } from "react";
-import { Trophy, RefreshCcw, Crown } from "lucide-react";
+import { Trophy, RefreshCcw } from "lucide-react";
 import { Player } from "../../types/game";
 
 interface RoomLeaderboardProps {

@@ -5,6 +5,7 @@ import NumberGrid from "../NumberGrid/NumberGrid";
 import RoomLeaderboard from "../RoomLeaderboard/RoomLeaderboard";
 import { Player } from "../../types/game";
 import { socket } from "../../services/socket";
+import TopScorePopup from "../TopScorePopup/TopScorePopup";
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 interface RoomDetails {
@@ -31,6 +32,7 @@ const GamePage: React.FC<GamePageProps> = ({
 }) => {
   const navigate = useNavigate();
   const [roomDetails, setRoomDetails] = useState<RoomDetails | null>(null);
+  const [showTopPopup, setShowTopPopup] = useState<boolean>(false);
 
   useEffect(() => {
     if (!currentRoomId) return;
@@ -54,7 +56,6 @@ const GamePage: React.FC<GamePageProps> = ({
 
   useEffect(() => {
     socket.on("room:playerCountUpdated", (data: { playersCount: number }) => {
-      console.log("Room player count updated:", data.playersCount);
       setRoomDetails((prev) =>
         prev ? { ...prev, playersCount: data.playersCount } : prev
       );
@@ -94,13 +95,21 @@ const GamePage: React.FC<GamePageProps> = ({
           roomId={currentRoomId}
           playerId={currentPlayer.id}
           playerCount={players.length}
+          onGameComplete={() => setShowTopPopup(true)}
         />
       </div>
       <div className="w-full lg:w-1/3">
         <div className="bg-white p-6 rounded-3xl shadow-2xl h-full">
           <RoomLeaderboard roomId={currentRoomId} />
+
         </div>
       </div>
+      {showTopPopup && (
+        <TopScorePopup
+          roomId={currentRoomId!}
+          onClose={() => setShowTopPopup(false)}
+        />
+      )}
     </div>
   );
 };

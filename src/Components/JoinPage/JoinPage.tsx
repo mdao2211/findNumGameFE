@@ -48,14 +48,14 @@ const JoinPage: React.FC<JoinPageProps> = ({
     setCurrentRoomId(roomId);
     socket.emit(
       "joinRoom",
-      { roomId, playerId: player.id },
+      { roomId, playerId: player.id, isHost: false },
       (response: JoinRoomResponse) => {
         if (response.success && response.player) {
           setCurrentPlayer(response.player);
-          localStorage.setItem(
-            "currentPlayer",
-            JSON.stringify(response.player)
-          );
+          // Lưu thông tin người chơi ban đầu vào localStorage (bao gồm trường color)
+          if (!localStorage.getItem("currentPlayer")) {
+            localStorage.setItem("currentPlayer", JSON.stringify(response.player));
+          }
           navigate("/game");
         } else {
           alert(response.error || "Join room failed");
@@ -63,6 +63,8 @@ const JoinPage: React.FC<JoinPageProps> = ({
       }
     );
   };
+  
+  
 
   return (
     <div className="space-y-6">

@@ -7,7 +7,6 @@ import GamePage from "./Components/GamePage/GamePage";
 import useLeaderboard from "./hooks/useLeaderboard";
 import { Player, JoinRoomResponse } from "./types/game";
 
-
 const AppRoutes: React.FC = () => {
   const { leaderboard, fetchLeaderboard } = useLeaderboard();
   const {
@@ -41,9 +40,8 @@ const AppRoutes: React.FC = () => {
     }
   }, []);
 
-  // Rejoin room khi socket connect
+  // Khi kết nối lại, dùng dữ liệu đã lưu trong localStorage để rejoin room
   useEffect(() => {      
-
     socket.on("connect", () => { 
       const storedRoomId = localStorage.getItem("currentRoomId");
       const storedPlayer = localStorage.getItem("currentPlayer");
@@ -53,13 +51,10 @@ const AppRoutes: React.FC = () => {
           "joinRoom",
           { roomId: storedRoomId, playerId: player.id, isHost: player.isHost },
           (response: JoinRoomResponse) => {
-            // console.log(response);
             if (response.success && response.player) {
+              // Cập nhật state currentPlayer nếu nhận được dữ liệu của người chơi đã lưu
               setCurrentPlayer(response.player);
-              localStorage.setItem(
-                "currentPlayer",
-                JSON.stringify(response.player)
-              );
+              // Không ghi đè localStorage, chỉ lưu dữ liệu ban đầu
             }
           }
         );
@@ -72,12 +67,13 @@ const AppRoutes: React.FC = () => {
 
   useEffect(() => {
     socket.on("connect", () => {
-      console.log("Connected to server");
+      // console.log("Connected to server");
     });
 
     socket.on("room:playerJoined", (joinedPlayer: Player) => {
+      // Chỉ cập nhật state currentPlayer nếu ID khớp với người chơi của bạn
       setCurrentPlayer((prev) => {
-        if (!prev || joinedPlayer.id === prev.id) {
+        if (prev && joinedPlayer.id === prev.id) {
           return joinedPlayer;
         }
         return prev;
@@ -89,26 +85,16 @@ const AppRoutes: React.FC = () => {
       removePlayer(playerId);
     });
 
-    socket.on("score:updated", (updatedPlayer: Player) => {
-      updatePlayerScore(updatedPlayer.id, updatedPlayer.score ?? 0);
-    });
-
     socket.on("game:end", (winner: Player) => {
       endGame(winner);
       fetchLeaderboard();
-    });
-
-    socket.on("game:timeUpdate", (time: number) => {
-      setTimeRemaining(time);
     });
 
     return () => {
       socket.off("connect");
       socket.off("room:playerJoined");
       socket.off("player:leave");
-      socket.off("score:updated");
       socket.off("game:end");
-      socket.off("game:timeUpdate");
       socket.off("room:playerCountUpdated");
     };
   }, [
