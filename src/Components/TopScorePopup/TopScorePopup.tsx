@@ -56,7 +56,7 @@ const TopScorePopup: React.FC<TopScorePopupProps> = ({ roomId, onClose }) => {
       <div className="absolute inset-0 bg-black opacity-70"></div>
       {/* Popup card */}
       <div
-        className="w-full max-w-4xl max-h-[24rem] bg-gradient-to-r from-yellow-300 to-yellow-400 shadow-lg rounded-md p-6 mx-auto relative z-10 overflow-auto"
+        className="w-full max-w-4xl bg-gradient-to-r from-yellow-300 to-yellow-400 shadow-lg rounded-md p-6 mx-auto relative z-10 overflow-auto"
         onClick={(e) => e.stopPropagation()} // Ngăn click vào card không đóng popup
       >
         <h2 className="text-4xl font-bold mb-6 text-center">
